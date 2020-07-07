@@ -94,14 +94,14 @@ def inputSlim(iterations,recipe,wStrength,sStrength,N,pposL,pposH,bgsMutRate,out
 
     return(inp)
 
-def parsePolDiv(dafPath,divPath):
+def parsePolDiv(path):
     """
     slr, tupple array with daf and div data by element in list
     """
 
-    dafFiles = glob.glob(dafPath + "/*.tsv.gz")
-    divFiles = glob.glob(divPath + "/div*.tsv.gz")
-    alFiles  = glob.glob(divPath + "/al*.tsv.gz")
+    dafFiles = glob.glob(path + "/daf/*.tsv.gz")
+    divFiles = glob.glob(path + "/div/div*.tsv.gz")
+    alFiles  = glob.glob(path + "/div/al*.tsv.gz")
 
     iteration = len(dafFiles)
     sfs       = pd.DataFrame(np.zeros((1321,4)),columns=['pi','p0','pw','pi_nopos'])
