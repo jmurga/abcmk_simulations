@@ -23,11 +23,7 @@ initialize() {
 	// adap = Analytical.parameters(N=1000,n=661,Lf=2*10^5,gam_neg=-457);
 	// Analytical.set_theta_f(adap)
 	//bgsMutationRate = 1.64e-6;
-	bgsMutationRate = 1.64e-15;
-	sbMutationRate  = 2.6e-7;
-	wbMutationRate  = 7.8e-6;
 
-	//rates = c(bgsMutationRate/(4*N), sbMutationRate/(4*N),wbMutationRate/(4*N),bgsMutationRate/(4*N)); 
 	rates = c (bgsMutationRate, 0.001/(4*N),bgsMutationRate); 
 	// mutation rate end positions
 	// 99999 100499 100999 201999
