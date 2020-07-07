@@ -99,9 +99,9 @@ def parsePolDiv(dafPath,divPath):
     slr, tupple array with daf and div data by element in list
     """
 
-    dafFiles = glob.glob(dafPath + "/*.tsv")
-    divFiles = glob.glob(divPath + "/div*.tsv")
-    alFiles  = glob.glob(divPath + "/al*.tsv")
+    dafFiles = glob.glob(dafPath + "/*.tsv.gz")
+    divFiles = glob.glob(divPath + "/div*.tsv.gz")
+    alFiles  = glob.glob(divPath + "/al*.tsv.gz")
 
     iteration = len(dafFiles)
     sfs       = pd.DataFrame(np.zeros((1321,4)),columns=['pi','p0','pw','pi_nopos'])
