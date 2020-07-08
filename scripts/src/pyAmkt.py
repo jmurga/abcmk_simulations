@@ -81,7 +81,7 @@ def cumulativeSfs(x):
 			out[i,1:] = app
 		else:
 			out[i,0]  = f[i]
-			out[i,:] = np.zeros(app.shape[0])
+			out[i,1:] = np.zeros(app.shape[0])
 
 	return out
 
