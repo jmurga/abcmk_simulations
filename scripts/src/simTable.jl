@@ -51,9 +51,7 @@ function simTable(alphas,bgsValues,pSize)
     return out
 end    
 
-simulations = simTable(alpha,bgs,7310)
-s = simulations[(simulations.alpha .== 0.4),:]
+simulations = simTable(alpha,bgs,parse(Int,ARGS[1]))
 
-
-CSV.write("/home/jmurga/mkt/202004/rawData/simulations/simTable.tsv", simulations, delim='\t')
+CSV.write("/home/jmurga/mkt/202004/rawData/simulations/" * ARGS[2] * ".tsv", simulations, delim='\t')
 

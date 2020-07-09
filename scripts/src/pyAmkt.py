@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 from scipy import optimize
-
+import pandas as pd 
 def amkt(daf, div, xlow, xhigh,check='raise'):
     res = {}
 

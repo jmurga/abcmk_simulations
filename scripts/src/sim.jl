@@ -44,15 +44,14 @@ function bgsIter(param::Analytical.parameters,afac::Float64,bfac::Float64,alTot:
 end
 
 
-
-
-sfs = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noBgsNoDemog/sfsBgs.tsv")))
+sfs = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/noDemog_0.4_0.2_0.999/sfs.tsv")))
+sfs = sfs[:,2:end]
 sfs = convert.(Int64,Analytical.cumulativeSfs(sfs))
 
 sfsPos = [sfs[:,1] + sfs[:,2] sfs[:,1] + sfs[:,2]]
 sfsNopos = [sfs[:,4] + sfs[:,2] sfs[:,4] + sfs[:,2]]
 
-div = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noBgsNoDemog/divBgs.tsv")))
+div = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/noDemog_0.4_0.2_0.999/div.tsv")))
 anDiv = [convert(Int64,sum(div)),convert(Int64,sum(div))]
 
 # Set up model
