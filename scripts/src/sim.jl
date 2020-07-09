@@ -10,7 +10,7 @@ function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Arra
 		afac      = 0.184*(2^fac)
 		bfac      = 0.000402*(2^fac)
 		
-		alTot     = rand(collect(0.05:0.01:0.4))
+		alTot     = rand(collect(0.05:0.05:0.4))
 		lfac      = rand(collect(0.1:0.1:1))
 		alLow     = round(alTot * lfac,digits=2)
 
@@ -49,11 +49,11 @@ sfs = convert(Array,DataFrame!(CSV.File(ARGS[1])))
 sfs = sfs[:,2:end]
 sfs = convert.(Int64,Analytical.cumulativeSfs(sfs))
 
-sfsPos = [sfs[:,1] + sfs[:,2] sfs[:,1] + sfs[:,2]]
-sfsNopos = [sfs[:,4] + sfs[:,2] sfs[:,4] + sfs[:,2]]
+sfsPos   = sfs[:,1] + sfs[:,2]
+sfsNopos = sfs[:,4] + sfs[:,2] 
 
 div = convert(Array,DataFrame!(CSV.File(ARGS[2])))
-anDiv = [convert(Int64,sum(div)),convert(Int64,sum(div))]
+anDiv = [convert(Int64,sum(div))]
 
 # Set up model
 adap = Analytical.parameters(N=500,n=661, gam_neg=-457, gL=10,gH=500,B=0.999,alTot=0.4,alLow=0.4)
@@ -61,5 +61,5 @@ adap = Analytical.parameters(N=500,n=661, gam_neg=-457, gL=10,gH=500,B=0.999,alT
 Analytical.binomOp(adap)
 
 summStats(adap,1,anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/test",100,0.999)
-summStats(adap,parse(Int,ARGS[3]),anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/" * ARGS[4] , 100,0.999)
+summStats(adap,parse(Int,ARGS[3]),anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/" * ARGS[4] , 100,0.9)
 
