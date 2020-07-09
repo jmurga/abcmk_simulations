@@ -110,7 +110,7 @@ initialize() {
 58000 late() {
 	
 	// Sample individuals
-	sampledIndividuals = p1.sampleIndividuals(661,replace=T).genomes;  
+	sampledIndividuals = p1.sampleIndividuals(N).genomes;  
 	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
 	//m1muts = sim.mutationsOfType(m1);
 	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
@@ -126,31 +126,31 @@ initialize() {
 
 	
 	if( sum(m0.size()) == 0){
-		p0 = rep(0,661*2-1);
+		p0 = rep(0,N*2-1);
 	}else{
 		// Get frequencies and cleaning fixed within sample
 		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
 		f0 = f0[f0>0 & f0<1];
-		p0  = sapply(1:(661*2-1), " sum((f0 >= applyValue / (661*2)) & (f0 < (applyValue + 1) / (661*2))); ");
+		p0  = sapply(1:(N*2-1), " sum((f0 >= applyValue / (N*2)) & (f0 < (applyValue + 1) / (N*2))); ");
 	}
  	
 	if(sum(mi.size()) == 0){
-		pi = rep(0,661*2-1);
+		pi = rep(0,N*2-1);
 
 	}else{
 		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");
 		fi = fi[fi>0 & fi<1];
 			
 		// 	Make binned SFS
-		pi  = sapply(1:(661*2-1), " sum((fi >= applyValue / (661*2)) & (fi < (applyValue + 1) / (661*2))); ");
+		pi  = sapply(1:(N*2-1), " sum((fi >= applyValue / (N*2)) & (fi < (applyValue + 1) / (N*2))); ");
 
 	}
 
 	if (sum(mf5.size()) == 0){
-		pw = rep(0,(661*2)-1);
+		pw = rep(0,(N*2)-1);
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
-		pw  = sapply(1:((661*2)-1), " sum((fw >= applyValue / (661*2)) & (fw < (applyValue + 1) / (661*2))); ");
+		pw  = sapply(1:((N*2)-1), " sum((fw >= applyValue / (N*2)) & (fw < (applyValue + 1) / (N*2))); ");
 	}	
 
    	// Get substitution info
@@ -171,9 +171,9 @@ initialize() {
 	dw = m5Subs.size();
 
 
-	f = (1:(661*2-1)) / (661*2);
+	f = (1:(N*2-1)) / (N*2);
 	catn("daf\tpi\tp0\tpw");
-	for (i in 0:(661*2-2)){
+	for (i in 0:(N*2-2)){
 		catn(f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
 	}
 
