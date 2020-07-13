@@ -61,5 +61,5 @@ adap = Analytical.parameters(N=500,n=661, gam_neg=-457, gL=10,gH=500,B=0.999,alT
 Analytical.binomOp(adap)
 
 summStats(adap,1,anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/test",100,0.999)
-summStats(adap,parse(Int,ARGS[3]),anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/" * ARGS[4] , 100,0.9)
+summStats(adap,parse(Int,ARGS[3]),anDiv,sfsPos,ARGS[4] , 100,0.9)
 
