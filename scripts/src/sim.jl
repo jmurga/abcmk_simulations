@@ -1,7 +1,8 @@
 using Analytical, CSV,DataFrames, ProgressMeter
 
 function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Array,output::String,b::Int64,c::Float64)
-	# @threads
+    # @threads
+    
 	@showprogress for i in 1:iter
 	# for i in 1:iter
 
@@ -11,9 +12,8 @@ function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Arra
 		bfac      = 0.000402*(2^fac)
 		
 		alTot     = rand(collect(0.05:0.05:0.4))
-		lfac      = rand(collect(0.1:0.1:1))
-		alLow     = round(alTot * lfac,digits=2)
-
+		lfac      = rand(collect(0.1:0.1:0.9))
+		alLow     = round(alTot * lfac,digits=5)
 		# println((thread=Threads.threadid(), iteration=i))
 		bgsIter(param,afac,bfac,alTot,alLow,div,sfs,output,b,c)
 	end

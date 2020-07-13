@@ -105,7 +105,7 @@ def parsePolDiv(path,N):
 
     iteration = len(dafFiles)
     sfs       = pd.DataFrame(np.zeros(((N*2)-1,4)),columns=['pi','p0','pw','pi_nopos'])
-    divs      = pd.DataFrame(np.zeros((1,2)),columns=['di','d0'])
+    divs      = pd.DataFrame(np.zeros((1,3)),columns=['di','d0','dw'])
     alphas    = pd.DataFrame(np.zeros((iteration,3)),columns=['trueAlphaW','trueAlphaS','trueAlpha'])
 
     for f in tqdm(range(0,iteration)):
