@@ -45,21 +45,30 @@ function bgsIter(param::Analytical.parameters,afac::Float64,bfac::Float64,alTot:
 end
 
 
-sfs = convert(Array,DataFrame!(CSV.File(ARGS[1])))
+sfs = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/" * ARGS[1] * "/sfs.tsv")))
 sfs = sfs[:,2:end]
 sfs = convert.(Int64,Analytical.cumulativeSfs(sfs))
 
 sfsPos   = sfs[:,1] + sfs[:,2]
 sfsNopos = sfs[:,4] + sfs[:,2] 
 
-div = convert(Array,DataFrame!(CSV.File(ARGS[2])))
+div = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/" * ARGS[1] * "/div.tsv")))
 anDiv = [convert(Int64,sum(div))]
 
-# Set up model
+
+# Set up modeld        = DataFrame(convert.(Int64,divergence))
+pn       = cSfs[1,1]
+ps       = cSfs[1,2]
+rSfs     = Analytical.reduceSfs(cSfs,100)'
+alpha    = @. round(1 - divergence[2]/divergence[1] * rSfs[:,1]/rSfs[:,2],digits=5)'
+
+
+inputAbc = hcat(d,DataFrame([pn ps]),DataFrame(alpha),makeunique=true)
+CSV.write("/home/jmurga/mkt/202004/rawData/summStat/noDemog/" * ARGS[1] * "/sfsNoDemog.tsv", inputAbc, delim='\t');
+
 adap = Analytical.parameters(N=500,n=661, gam_neg=-457, gL=10,gH=500,B=0.999,alTot=0.4,alLow=0.4)
 #adap.nn=101
 Analytical.binomOp(adap)
-
 summStats(adap,1,anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/test",100,0.999)
-summStats(adap,parse(Int,ARGS[3]),anDiv,sfsPos,ARGS[4] , 100,0.9)
 
+summStats(adap,parse(Int,ARGS[2]),anDiv,sfsPos,"/home/jmurga/mkt/202004/rawData/summStat/noDemog/" * ARGS[1] * ARGS[3] , 100,0.9)
