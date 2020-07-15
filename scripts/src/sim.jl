@@ -63,7 +63,8 @@ rSfs     = Analytical.reduceSfs(sfs,100)'
 alpha    = @. round(1 - divergence[2]/divergence[1] * rSfs[:,1]/rSfs[:,2],digits=5)'
 
 
-inputAbc = hcat(divergence[1:2],DataFrame([pn ps]),DataFrame(alpha),makeunique=true)
+inputAbc = hcat(DataFrame(convert.(Int64,divergence[1:2]')),DataFrame([pn ps]),DataFrame(alpha),makeunique=true)
+
 CSV.write("/home/jmurga/mkt/202004/rawData/summStat/noDemog/" * ARGS[1] * "/sfsNoDemog.tsv", inputAbc, delim='\t');
 
 adap = Analytical.parameters(N=500,n=661, gam_neg=-457, gL=10,gH=500,B=0.999,alTot=0.4,alLow=0.4)
