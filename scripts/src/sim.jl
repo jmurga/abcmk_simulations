@@ -12,9 +12,11 @@ function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Arra
 		bfac      = 0.000402*(2^fac)
 		
 		alTot     = rand(collect(0.05:0.05:0.4))
-		lfac      = rand(collect(0.1:0.1:0.9))
-		alLow     = round(alTot * lfac,digits=5)
-		# println((thread=Threads.threadid(), iteration=i))
+		alLow     = round(rand(collect((alTot/10):(alTot/10):alTot)),digits=2)
+		# lfac      = rand(collect(0.1:0.1:0.9))
+		# alLow     = round(alTot * lfac,digits=2)
+        # println((thread=Threads.threadid(), iteration=i))
+        
 		bgsIter(param,afac,bfac,alTot,alLow,div,sfs,output,b,c)
 	end
 end
@@ -44,7 +46,6 @@ function bgsIter(param::Analytical.parameters,afac::Float64,bfac::Float64,alTot:
 		end
 end
 
-
 sfs = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/" * ARGS[1] * "/sfs.tsv")))
 sfs = sfs[:,2:end]
 sfs = convert.(Int64,Analytical.cumulativeSfs(sfs))
@@ -55,13 +56,11 @@ sfsNopos = sfs[:,4] + sfs[:,2]
 divergence = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/" * ARGS[1] * "/div.tsv")))
 anDiv = [convert(Int64,sum(divergence[1:2]))]
 
-
 # Set up modeld        = DataFrame(convert.(Int64,divergence))
 pn       = sfs[1,1]
 ps       = sfs[1,2]
 rSfs     = Analytical.reduceSfs(sfs,100)'
 alpha    = @. round(1 - divergence[2]/divergence[1] * rSfs[:,1]/rSfs[:,2],digits=5)'
-
 
 inputAbc = hcat(DataFrame(convert.(Int64,divergence[1:2]')),DataFrame([pn ps]),DataFrame(alpha),makeunique=true)
 
