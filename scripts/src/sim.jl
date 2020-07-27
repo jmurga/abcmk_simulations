@@ -11,8 +11,8 @@ function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Arra
 		afac      = 0.184*(2^fac)
 		bfac      = 0.000402*(2^fac)
 		
-		alTot     = rand(collect(0.05:0.05:0.4))
-		alLow     = round(rand(collect((alTot/10):(alTot/10):alTot)),digits=2)
+		alTot     = rand(collect(0.01:0.01:0.4))
+		alLow     = round(rand(collect((alTot/10):(alTot/10):alTot)),digits=5)
 		# lfac      = rand(collect(0.1:0.1:0.9))
 		# alLow     = round(alTot * lfac,digits=2)
         # println((thread=Threads.threadid(), iteration=i))

@@ -56,7 +56,7 @@ def amkt(daf, div, xlow, xhigh,check='raise'):
 
     res['ciLow'], res['ciHigh'] = np.quantile([exp_model(x[0], x[1], x[2], x[3]) for x in simpars], [0.025, 0.975])
 
-    return res
+    return res,alpha[trim]
 
 @njit
 def exp_model(f_trimmed, a, b, c):
@@ -85,6 +85,7 @@ def cumulativeSfs(x):
 
 	return out
 
+@njit
 def reduceSfs(x,bins):
 
     f = x[:,0]
