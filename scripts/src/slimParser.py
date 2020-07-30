@@ -146,11 +146,11 @@ def priorsJulia(table,nSimulations,nFiles,script="/home/jmurga/mkt/202004/script
 		
 
 		for i in nNames:
-			p =  output + '/' + row.path.split('/')[-1] + '_' + i + '1.tsv' 
+			p =  output + '/' + output.split('/')[-1] + '_' + i + '1.tsv' 
 			d =  output + '/' + 'sfsNoDemog.tsv'
 			
 			f = open(jobFile, "a")
-			f.write('/home/jmurga/ABCreg/scr/reg -p ' + p + ' -d ' + d + ' -P 3 -S 104 -b ' + output + i + ' -T -t 0.001' + '\n')
+			f.write('/home/jmurga/ABCreg/src/reg -p ' + p + ' -d ' + d + ' -P 3 -S 104 -b ' + output + '/' + i + ' -T -t 0.001' + '\n')
 			f.close()
 
 
