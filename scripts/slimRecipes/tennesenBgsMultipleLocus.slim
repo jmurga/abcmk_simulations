@@ -16,7 +16,7 @@ initialize() {
 	defineConstant("weaklyStrength", $weaklyStrength); // 2Nes
 	defineConstant("strongStrength", $strongStrength); // 2Nes
 	defineConstant("bgsMutationRate", $bgsMutationRate); // mu=theta_f/4*N
-	defineConstant("totalGenes", $nGenes); 
+	defineConstant("totalGenes", 10); 
 	
 	defineConstant("pBeneficialW", $pposL);
 	defineConstant("pBeneficialS", $pposH);
@@ -103,8 +103,8 @@ initialize() {
 	p2.setMigrationRates(c(p1), c(15e-5));
 }
 
-Second european bottleneck and population growth
-This occurs 23000 years (920 generations) ago
+// Second european bottleneck and population growth
+// This occurs 23000 years (920 generations) ago
 186580 {
 	p2.setSubpopulationSize(1030);  // reduce European size
 	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
@@ -119,7 +119,7 @@ This occurs 23000 years (920 generations) ago
 186580:187295 {
 
 	// t = sim.generation - 57080;
-	t = sim.generation - 57080;
+	t = sim.generation - 186580;
 	//exp rescaled from 0.00307
 	p2_size = round(1030 * exp(0.00307 * t));
 	p2.setSubpopulationSize(asInteger(p2_size));
@@ -131,10 +131,10 @@ This occurs 23000 years (920 generations) ago
 // 57795:58000 {
 187295:187500 {
 
-	t = sim.generation - 57795;
+	t = sim.generation - 187295;
 	//exp rescaled from 0.0166; 0.0195
 	p1_size = round(14470 * exp(0.0166 * t));
-	p2_size = round(9390 * exp(0.1095 * t));
+	p2_size = round(9390 * exp(0.01095 * t));
 
 	p1.setSubpopulationSize(asInteger(p1_size));	
 	p2.setSubpopulationSize(asInteger(p2_size));
