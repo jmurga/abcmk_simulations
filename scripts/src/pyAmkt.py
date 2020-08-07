@@ -90,7 +90,7 @@ def cumulativeSfs(x):
 
 	return out
 
-@njit
+# @njit
 def reduceSfs(x,bins):
 
     f = x[:,0]
@@ -101,7 +101,7 @@ def reduceSfs(x,bins):
     out  = np.zeros((bins,x.shape[1]))
     out[:,0]  = np.unique(inds)
     
-    sfsGrouped = np.hstack([np.outputhape(inds,(inds.shape[0],1)),sfs])
+    sfsGrouped = np.hstack([np.reshape(inds,(inds.shape[0],1)),sfs])
     for i in np.unique(inds):
         out[out[:,0]==i,1:] = np.sum(sfsGrouped[sfsGrouped[:,0] == i,1:],axis=0) 
         

@@ -3,27 +3,27 @@ using Analytical, CSV,DataFrames, ProgressMeter
 function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Array,output::String,b::Int64,c::Float64)
     # @threads
     
-	@showprogress for i in 1:iter
-	# for i in 1:iter
+        @showprogress for i in 1:iter
+        # for i in 1:iter
 
 
-		fac       = rand(-2:0.05:2)
-		afac      = 0.184*(2^fac)
-		bfac      = 0.000402*(2^fac)
-		
-		alTot     = rand(collect(0.01:0.01:0.4))
-		# alLow     = round(rand(collect((alTot/10):(alTot/10):alTot)),digits=5)
-		lfac      = rand(collect(0.1:0.1:0.9))
-		alLow     = round(alTot * lfac,digits=5)
+                fac       = rand(-2:0.05:2)
+                afac      = 0.184*(2^fac)
+                bfac      = 0.000402*(2^fac)
+                
+                alTot     = rand(collect(0.01:0.01:0.4))
+                # alLow     = round(rand(collect((alTot/10):(alTot/10):alTot)),digits=5)
+                lfac      = rand(collect(0.1:0.1:0.9))
+                alLow     = round(alTot * lfac,digits=5)
         # println((thread=Threads.threadid(), iteration=i))
         
-		bgsIter(param,afac,bfac,alTot,alLow,div,sfs,output,b,c)
-	end
+                bgsIter(param,afac,bfac,alTot,alLow,div,sfs,output,b,c)
+        end
 end
 
 function bgsIter(param::Analytical.parameters,afac::Float64,bfac::Float64,alTot::Float64,alLow::Float64,div::Array,sfs::Array,output::String,b::Int64,c::Float64)
 
-	for j in param.bRange
+        for j in param.bRange
         # j = 0.999
         param.al = afac; param.be = bfac; 
         param.alLow = alLow; param.alTot = alTot; param.B = j
@@ -43,7 +43,7 @@ function bgsIter(param::Analytical.parameters,afac::Float64,bfac::Float64,alTot:
 
         Analytical.summaryStatistics(output, z)
 
-		end
+                end
 end
 
 sfs = convert(Array,DataFrame!(CSV.File("/home/jmurga/mkt/202004/rawData/simulations/noDemog/" * ARGS[1] * "/sfs.tsv")))

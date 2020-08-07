@@ -75,42 +75,46 @@ initialize() {
 
 // Expand the African population to 14474
 // This occurs 148000 years (5920) generations ago
-52080 { 
+// 52080 { 
+181580 { 
 	p1.setSubpopulationSize(14470); 
 }
 
 // Split non-Africans from Africans and set up migration between them
 // This occurs 51000 years (2040 generations) ago
-// 55960 {
-// 	sim.addSubpopSplit("p2", 1860, p1);
-// 	p1.setMigrationRates(c(p2), c(15e-5));
-// 	p2.setMigrationRates(c(p1), c(15e-5));
-// }
+185460 {
+	sim.addSubpopSplit("p2", 1860, p1);
+	p1.setMigrationRates(c(p2), c(15e-5));
+	p2.setMigrationRates(c(p1), c(15e-5));
+}
 
-// Second european bottleneck and population growth
-// This occurs 23000 years (920 generations) ago
-// 57080 {
-// 	p2.setSubpopulationSize(1030);  // reduce European size
-// 	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
-// 	p1.setMigrationRates(c(p2), c(2.5e-5));
-// 	p2.setMigrationRates(c(p1), c(2.5e-5));
-// }
+Second european bottleneck and population growth
+This occurs 23000 years (920 generations) ago
+186580 {
+	p2.setSubpopulationSize(1030);  // reduce European size
+	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
+	p1.setMigrationRates(c(p2), c(2.5e-5));
+	p2.setMigrationRates(c(p1), c(2.5e-5));
+}
 
 // Set up exponential growth
 // Where N(0) is the base subpopulation size and t = gen - 57080:
 // N(Europe) should be int(round(N(0) * e^(0.0038*t)))
-// 57080:57800 {
+// 57080:57795 {
+186580:187295 {
 
-// 	t = sim.generation - 57080;
-// 	//exp rescaled from 0.00307
-// 	p2_size = round(1030 * exp(0.00307 * t));
-// 	p2.setSubpopulationSize(asInteger(p2_size));
+	// t = sim.generation - 57080;
+	t = sim.generation - 57080;
+	//exp rescaled from 0.00307
+	p2_size = round(1030 * exp(0.00307 * t));
+	p2.setSubpopulationSize(asInteger(p2_size));
 
 
-// }
+}
 
 // Second exponential growth
-57795:58000 {
+// 57795:58000 {
+187295:187500 {
 
 	t = sim.generation - 57795;
 	//exp rescaled from 0.0166; 0.0195
@@ -124,7 +128,8 @@ initialize() {
 
 
 // Generation 5800 is the present. Output and terminate.
-58000 late() {
+// 58000 late() {
+187500 late() {
 	
 	// Sample individuals
 	sampledIndividuals = p1.sampleIndividuals(661).genomes;  
