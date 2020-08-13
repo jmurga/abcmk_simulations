@@ -109,7 +109,7 @@ def parsePolDiv(path,N):
 	divs      = pd.DataFrame(np.zeros((1,3)),columns=['di','d0','dw'])
 	alphas    = pd.DataFrame(np.zeros((iteration,3)),columns=['trueAlphaW','trueAlphaS','trueAlpha'])
 
-	for f in tqdm(range(0,iteration)):
+	for f in tqdm(range(1,iteration )):
 		daf             = pd.read_csv(dafFiles[f], header=0, sep='\t')
 		daf['pi_nopos'] = daf.pi - daf.pw
 		sfs           = sfs + daf.iloc[:,1:]

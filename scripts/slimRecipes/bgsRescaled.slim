@@ -6,33 +6,32 @@ initialize() {
 	//mu = Analytical.set_theta_f(adap)
 
 	// rescale and not, check 
-	defineConstant("N", popSize);
-	defineConstant("fileName", nF);
-	defineConstant("fullPath", p );
+	// Not rescaling popsize in order to account for extreme frequency values at SFS
+	defineConstant("N", $N);
+
 	// Command line arguments
-	defineConstant("wS", weaklyStrength); // 2Nes
-	defineConstant("sS", strongStrength); // 2Nes
-	defineConstant("muBgs", bgsMutationRate); // 2Nes
+	//Rescaling the strength rather than Ne, in order to reduce generation time to proper fixations.
+	defineConstant("weaklyStrength", $weaklyStrength/10); // 2Nes
+	defineConstant("strongStrength", $strongStrength/10); // 2Nes
+	defineConstant("bgsMutationRate", $bgsMutationRate); // 2Nes
 	
-	defineConstant("pBeneficialW", pposL);
-	defineConstant("pBeneficialS", pposH);
+	defineConstant("pBeneficialW", $pposL);
+	defineConstant("pBeneficialS", $pposH);
 	defineConstant('nc_length', asInteger(10^5));
 	defineConstant('ex_length', asInteger(10^3));
-
 
 	// Solve analytical to obtain the mutation rate in non-coding locus 
 	// The reduction depends on rho, locus lenght and negative selection strength
 	// adap = Analytical.parameters(N=1000,n=661,Lf=2*10^5,gam_neg=-457);
 	// Analytical.set_theta_f(adap)
-	//muBgs = 1.64e-6;
+	//bgsMutationRate = 1.64e-6;
 
-	rates = c (muBgs, 0.001/(4*N),muBgs); 
+	rates = c (bgsMutationRate, 0.001/(4*N),bgsMutationRate); 
 	// mutation rate end positions
 	// 99999 100499 100999 201999
 	ends = c(nc_length-1,
                 nc_length+ex_length-1,
 				(nc_length*2)+ex_length-1);
-
 
 	initializeMutationRate(rates, ends);	
 	initializeRecombinationRate(0.001/(4*N));	
@@ -54,8 +53,6 @@ initialize() {
 
 	// Generate gene structure
 	base = 0;
-
-	// make a non-coding region
 	initializeGenomicElement(g3, base, base + nc_length - 1);
 	base = base + nc_length;
 	
@@ -64,10 +61,10 @@ initialize() {
 	base = base + ex_length;
 	//initializeGenomicElement(g2, base, base + ex_length - 1);
 	//base = base + ex_length;
-	
-	// make a non-coding region
+
 	initializeGenomicElement(g3, base, base + nc_length - 1);
 	base = base + nc_length;
+		
 
 }
 
@@ -76,63 +73,8 @@ initialize() {
 	sim.addSubpop("p1", N); 
 }
 
-// Expand the African population to 14474
-// This occurs 148000 years (5920) generations ago
-// 52080 { 
-21408 { 
-	p1.setSubpopulationSize(1447); 
-}
-
-// Split non-Africans from Africans and set up migration between them
-// Thi1s occurs 51000 years (2040 generations) ago
-21796 {
-	sim.addSubpopSplit("p2", 186, p1);
-	p1.setMigrationRates(c(p2), c(15e-4));
-	p2.setMigrationRates(c(p1), c(15e-4));
-}
-
-// Second european bottleneck and population growth
-// This occurs 23000 years (920 generations) ago
-21908 {
-	p2.setSubpopulationSize(103);  // reduce European size
-	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
-	p1.setMigrationRates(c(p2), c(2.5e-4));
-	p2.setMigrationRates(c(p1), c(2.5e-4));
-}
-
-// Set up exponential growth
-// Where N(0) is the base subpopulation size and t = gen - 57080:
-// N(Europe) should be int(round(N(0) * e^(0.0038*t)))
-// 57080:57795 {
-21908:21979 {
-
-	// t = sim.generation - 57080;
-	t = sim.generation - 21908;
-	//exp rescaled from 0.00307
-	p2_size = round(103 * exp(0.0307 * t));
-	p2.setSubpopulationSize(asInteger(p2_size));
-
-
-}
-
-// Second exponential growth
-// 57795:58000 {
-21979:22000 {
-
-	t = sim.generation - 21979;
-	//exp rescaled from 0.0166; 0.0195
-	p1_size = round(14470 * exp(0.166 * t));
-	p2_size = round(9390 * exp(0.1095 * t));
-
-	p1.setSubpopulationSize(asInteger(p1_size));	
-	p2.setSubpopulationSize(asInteger(p2_size));
-}
-
-
-
 // Generation 5800 is the present. Output and terminate.
-// 58000 late() {
-22000 late() {
+58000 late() {
 	
 	// Sample individuals
 	sampledIndividuals = p1.sampleIndividuals(661).genomes;  
@@ -156,7 +98,6 @@ initialize() {
 		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
 		f0 = f0[f0>0 & f0<1];
 		p0  = sapply(1:(661*2-1), " sum((f0 >= applyValue / (661*2)) & (f0 < (applyValue + 1) / (661*2))); ");
-
 	}
  	
 	if(sum(mi.size()) == 0){
@@ -167,8 +108,6 @@ initialize() {
 				
 		// 	Make binned SFS
 		pi  = sapply(1:(661*2-1), " sum((fi >= applyValue / (661*2)) & (fi < (applyValue + 1) / (661*2))); ");
-
-	
 	}
 
 	if (sum(mf5.size()) == 0){
@@ -177,6 +116,7 @@ initialize() {
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
 		pw  = sapply(1:((661*2)-1), " sum((fw >= applyValue / (661*2)) & (fw < (applyValue + 1) / (661*2))); ");
 	}	
+
 
    	// Get substitution info
 	subs = sim.substitutions;
@@ -195,49 +135,18 @@ initialize() {
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
 
-	if(isNAN(trueAlphaW)){
-		trueAlphaW = "NA";
-	}
-	if(isNAN(trueAlphaS)){
-		trueAlphaS = "NA";
-	}
-	if(isNAN(trueAlpha)){
-		trueAlpha = "NA";
-	}
-	
 	f = (1:(661*2-1)) / (661*2);
-	line = "daf\tpi\tp0\tpw";
-	writeFile( fullPath + "/daf/daf" + fileName +  ".tsv.gz", line, compress=T);
+	catn("daf\tpi\tp0\tpw");
 	for (i in 0:(661*2-2)){
-		line = f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i];
-			writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
+		catn(f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
 	}
 
-	line  = "di\td0\tdw";
-	writeFile(fullPath + "/div/div" + fileName +  ".tsv", line);
-	line  = di + "\t" + d0 + "\t" + dw;
-	writeFile(fullPath + "/div/div" + fileName +  ".tsv", line, append=T);
+	catn("di\td0\tdw");
+	catn(di + "\t" + d0 + "\t" + dw);
 	
-	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
-	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
-	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
-	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
-
-
-	// f = (1:(661*2-1)) / (661*2);
-	// catn("daf\tpi\tp0\tpw");
-	// for (i in 0:(661*2-2)){
-	// 	catn(f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
-	// }
-
-	// catn("di\td0\tdw");
-	// catn(di + "\t" + d0 + "\t" + dw);
-	
-	// catn("trueAlphaW" + "\t" + "trueAlphaS" + "\t" + "trueAlpha");
-	// catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
+	catn("trueAlphaW" + "\t" + "trueAlphaS" + "\t" + "trueAlpha");
+	catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
 	
 	//sampledIndividuals.outputVCF(filePath='/home/jmurga/tennesen.vcf'); // AFR ancestry phase 3 sample of size 661
 
 }
-
-
