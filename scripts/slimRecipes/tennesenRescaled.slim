@@ -214,9 +214,10 @@ initialize() {
 	}
 
 	line  = "di\td0\tdw";
-	writeFile(fullPath + "/div/div" + fileName +  ".tsv", line);
+	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz",line, compress=T); 
 	line  = di + "\t" + d0 + "\t" + dw;
-	writeFile(fullPath + "/div/div" + fileName +  ".tsv", line, append=T);
+	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz", line,append=T ,compress=T);
+
 	
 	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
