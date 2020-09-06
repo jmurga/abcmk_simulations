@@ -27,11 +27,11 @@ function simTable(alphas,bgsValues,pSize,length)
     for a in 1:size(alphas,1)
         for b in 1:size(bgsValues,1)
 
-            adap1 = Analytical.parameters(N=pSize,n=661,gam_neg=-457,Lf=length, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.25)
+            adap1 = Analytical.parameters(N=pSize,n=pSize,gam_neg=-457,Lf=length, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.25)
 
-            adap2 = Analytical.parameters(N=pSize,n=661,gam_neg=-457,Lf=length, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.5)
+            adap2 = Analytical.parameters(N=pSize,n=pSize,gam_neg=-457,Lf=length, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.5)
 
-            adap3 = Analytical.parameters(N=pSize,n=661,gam_neg=-457,Lf=length, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.75)
+            adap3 = Analytical.parameters(N=pSize,n=pSize,gam_neg=-457,Lf=length, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.75)
 
             r1 = analyticalApproach(adap1)
             r2 = analyticalApproach(adap2)

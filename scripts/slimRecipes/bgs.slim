@@ -72,7 +72,7 @@ initialize() {
 }
 
 // Generation 5800 is the present. Output and terminate.
-580000 late() {
+220000 late() {
 	
 	// Sample individuals
 	sampledIndividuals = p1.sampleIndividuals(661).genomes;  
@@ -90,29 +90,26 @@ initialize() {
 	mi  = c(mf3,mf4,mf5);
 
 	if( sum(m0.size()) == 0){
-		p0 = rep(0,661*2-1);
+		p0 = rep(0,661*2);
 	}else{
 		// Get frequencies and cleaning fixed within sample
 		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
-		f0 = f0[f0>0 & f0<1];
-		p0  = sapply(1:(661*2-1), " sum((f0 >= applyValue / (661*2)) & (f0 < (applyValue + 1) / (661*2))); ");
+		p0  = sapply(0:(661*2-1), " sum((f0 >= applyValue / (661*2)) & (f0 < (applyValue + 1) / (661*2))); ");
 	}
  	
 	if(sum(mi.size()) == 0){
 		pi = rep(0,661*2-1);
 	}else{
-		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");
-		fi = fi[fi>0 & fi<1];
-				
+		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");				
 		// 	Make binned SFS
-		pi  = sapply(1:(661*2-1), " sum((fi >= applyValue / (661*2)) & (fi < (applyValue + 1) / (661*2))); ");
+		pi  = sapply(0:(661*2-1), " sum((fi >= applyValue / (661*2)) & (fi < (applyValue + 1) / (661*2))); ");
 	}
 
 	if (sum(mf5.size()) == 0){
-		pw = rep(0,(661*2)-1);
+		pw = rep(0,(661*2);
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
-		pw  = sapply(1:((661*2)-1), " sum((fw >= applyValue / (661*2)) & (fw < (applyValue + 1) / (661*2))); ");
+		pw  = sapply(0:((661*2)-1), " sum((fw >= applyValue / (661*2)) & (fw < (applyValue + 1) / (661*2))); ");
 	}	
 
 
@@ -133,9 +130,9 @@ initialize() {
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
 
-	f = (1:(661*2-1)) / (661*2);
+	f = (0:(661*2-1)) / (661*2);
 	catn("daf\tpi\tp0\tpw");
-	for (i in 0:(661*2-2)){
+	for (i in 0:(661*2-1)){
 		catn(f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
 	}
 
