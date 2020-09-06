@@ -192,6 +192,7 @@ initialize() {
 	trueAlphaS = (m4Subs.size()) / (m5Subs.size() + m4Subs.size() + m3Subs.size());
 
 	di = m5Subs.size() + m4Subs.size() + m3Subs.size();
+	ds = m4Subs.size();
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
 
@@ -213,9 +214,9 @@ initialize() {
 			writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
 	}
 
-	line  = "di\td0\tdw";
+	line  = "di\td0\tdw\tds";
 	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz",line, compress=T); 
-	line  = di + "\t" + d0 + "\t" + dw;
+	line  = di + "\t" + d0 + "\t" + dw + "\t" + ds;
 	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz", line,append=T ,compress=T);
 
 	

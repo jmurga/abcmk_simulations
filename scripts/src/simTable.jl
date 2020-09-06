@@ -16,7 +16,7 @@ function analyticalApproach(param)
 end
 
 
-alpha = [ 0.2,  0.4]
+alpha = [ 0.4]
 bgs   = [0.2,0.4,0.8,0.999]
 
 function simTable(alphas,bgsValues,pSize,length)
@@ -49,7 +49,7 @@ function simTable(alphas,bgsValues,pSize,length)
     rename!(out, [Symbol("bgsThetaF"),Symbol("pposL"),Symbol("pposH") ,Symbol("alphaW"), Symbol("alpha"),Symbol("estimation"),Symbol("B")])
     
     return out
-end    
+end
 
 simulations = simTable(alpha,bgs,parse(Int,ARGS[1]))
 
