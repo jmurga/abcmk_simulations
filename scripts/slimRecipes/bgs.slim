@@ -7,6 +7,7 @@ initialize() {
 
 	// rescale and not, check 
 	defineConstant("N", $N);
+	defineConstant("bins", $bins);
 
 	// Command line arguments
 	defineConstant("weaklyStrength", $weaklyStrength); // 2Nes
@@ -15,7 +16,7 @@ initialize() {
 	
 	defineConstant("pBeneficialW", $pposL);
 	defineConstant("pBeneficialS", $pposH);
-	defineConstant('nc_length', asInteger(10^5));
+	defineConstant('nc_length', asInteger(5*10^4));
 	defineConstant('ex_length', asInteger(10^3));
 
 	// Solve analytical to obtain the mutation rate in non-coding locus 
@@ -75,7 +76,7 @@ initialize() {
 220000 late() {
 	
 	// Sample individuals
-	sampledIndividuals = p1.sampleIndividuals(661).genomes;  
+	sampledIndividuals = p1.sampleIndividuals(N).genomes;  
 	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
 	//m1muts = sim.mutationsOfType(m1);
 	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
@@ -90,26 +91,26 @@ initialize() {
 	mi  = c(mf3,mf4,mf5);
 
 	if( sum(m0.size()) == 0){
-		p0 = rep(0,661*2);
+		p0 = rep(0,bins);
 	}else{
 		// Get frequencies and cleaning fixed within sample
 		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
-		p0  = sapply(0:(661*2-1), " sum((f0 >= applyValue / (661*2)) & (f0 < (applyValue + 1) / (661*2))); ");
+		p0  = sapply(0:(bins), " sum((f0 >= applyValue / (bins)) & (f0 < (applyValue + 1) / (bins))); ");
 	}
  	
 	if(sum(mi.size()) == 0){
-		pi = rep(0,661*2-1);
+		pi = rep(0,bins);
 	}else{
 		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");				
 		// 	Make binned SFS
-		pi  = sapply(0:(661*2-1), " sum((fi >= applyValue / (661*2)) & (fi < (applyValue + 1) / (661*2))); ");
+		pi  = sapply(0:(bins), " sum((fi >= applyValue / (bins)) & (fi < (applyValue + 1) / (bins))); ");
 	}
 
 	if (sum(mf5.size()) == 0){
-		pw = rep(0,(661*2);
+		pw = rep(0,(bins);
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
-		pw  = sapply(0:((661*2)-1), " sum((fw >= applyValue / (661*2)) & (fw < (applyValue + 1) / (661*2))); ");
+		pw  = sapply(0:((bins)-1), " sum((fw >= applyValue / (bins)) & (fw < (applyValue + 1) / (bins))); ");
 	}	
 
 
@@ -130,14 +131,14 @@ initialize() {
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
 
-	f = (0:(661*2-1)) / (661*2);
+	f = (1:(bins)) / (bins);
 	catn("daf\tpi\tp0\tpw");
-	for (i in 0:(661*2-1)){
+	for (i in 0:(bins)){
 		catn(f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
 	}
 
-	catn("di\td0\tdw");
-	catn(di + "\t" + d0 + "\t" + dw);
+	catn("di\td0\tdw\tds");
+	catn(di + "\t" + d0 + "\t" + dw + "\t" + ds);
 	
 	catn("trueAlphaW" + "\t" + "trueAlphaS" + "\t" + "trueAlpha");
 	catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);

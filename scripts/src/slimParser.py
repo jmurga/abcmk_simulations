@@ -138,7 +138,7 @@ def parsePolDiv(path,N):
 	sfs = dt.Frame(sfs,names=['f','pi','p0','pw','pi_nopos'])
 	
 	divs = np.sum(divs,axis=0)
-	divs      = dt.Frame({'di':divs[0],'d0':divs[1],'dw':divs[2]})
+	divs      = dt.Frame({'di':divs[0],'d0':divs[1],'dw':divs[2],'ds':divs[3]})
 	alphas    = dt.Frame(alphas,names=['trueAlphaW','trueAlphaS','trueAlpha'])
 
 	return(sfs.to_pandas(),divs.to_pandas(),alphas.to_pandas())
