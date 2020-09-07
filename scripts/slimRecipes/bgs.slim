@@ -6,16 +6,18 @@ initialize() {
 	//mu = Analytical.set_theta_f(adap)
 
 	// rescale and not, check 
-	defineConstant("N", $N);
-	defineConstant("bins", $bins);
+	defineConstant("N", popSize);
+	defineConstant("fileName", nF);
+	defineConstant("fullPath", p );
+	
 
 	// Command line arguments
-	defineConstant("weaklyStrength", $weaklyStrength); // 2Nes
-	defineConstant("strongStrength", $strongStrength); // 2Nes
-	defineConstant("bgsMutationRate", $bgsMutationRate); // 2Nes
+	defineConstant("wS", weaklyStrength); // 2Nes
+	defineConstant("sS", strongStrength); // 2Nes
+	defineConstant("muBgs", bgsMutationRate); // 2Nes
 	
-	defineConstant("pBeneficialW", $pposL);
-	defineConstant("pBeneficialS", $pposH);
+	defineConstant("pBeneficialW", pposL);
+	defineConstant("pBeneficialS", pposH);
 	defineConstant('nc_length', asInteger(5*10^4));
 	defineConstant('ex_length', asInteger(10^3));
 
@@ -25,12 +27,13 @@ initialize() {
 	// Analytical.set_theta_f(adap)
 	//bgsMutationRate = 1.64e-6;
 
-	rates = c (bgsMutationRate, 0.001/(4*N),bgsMutationRate); 
+	rates = c (muBgs, 0.001/(4*N),muBgs); 
 	// mutation rate end positions
 	// 99999 100499 100999 201999
 	ends = c(nc_length-1,
                 nc_length+ex_length-1,
 				(nc_length*2)+ex_length-1);
+
 
 	initializeMutationRate(rates, ends);	
 	initializeRecombinationRate(0.001/(4*N));	
@@ -131,18 +134,36 @@ initialize() {
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
 
+	if(isNAN(trueAlphaW)){
+		trueAlphaW = "NA";
+	}
+	if(isNAN(trueAlphaS)){
+		trueAlphaS = "NA";
+	}
+	if(isNAN(trueAlpha)){
+		trueAlpha = "NA";
+	}
+	
 	f = (1:(bins)) / (bins);
-	catn("daf\tpi\tp0\tpw");
-	for (i in 0:(bins)){
-		catn(f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
+	line = "daf\tpi\tp0\tpw";
+	writeFile( fullPath + "/daf/daf" + fileName +  ".tsv.gz", line, compress=T);
+	for (i in 0:(bins-1)){
+		line = f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i];
+			writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
 	}
 
-	catn("di\td0\tdw\tds");
-	catn(di + "\t" + d0 + "\t" + dw + "\t" + ds);
+	line  = "di\td0\tdw\tds";
+	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz",line, compress=T); 
+	line  = di + "\t" + d0 + "\t" + dw + "\t" + ds;
+	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz", line,append=T ,compress=T);
+
 	
-	catn("trueAlphaW" + "\t" + "trueAlphaS" + "\t" + "trueAlpha");
-	catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
-	
+	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
+	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
+	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
+	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
+
+
 	//sampledIndividuals.outputVCF(filePath='/home/jmurga/tennesen.vcf'); // AFR ancestry phase 3 sample of size 661
 
 }
