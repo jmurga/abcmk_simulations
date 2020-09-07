@@ -9,6 +9,7 @@ initialize() {
 	defineConstant("N", popSize);
 	defineConstant("fileName", nF);
 	defineConstant("fullPath", p );
+	defineConstant("bn", bins );
 	
 
 	// Command line arguments
@@ -94,26 +95,26 @@ initialize() {
 	mi  = c(mf3,mf4,mf5);
 
 	if( sum(m0.size()) == 0){
-		p0 = rep(0,bins);
+		p0 = rep(0,bn);
 	}else{
 		// Get frequencies and cleaning fixed within sample
 		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
-		p0  = sapply(0:(bins), " sum((f0 >= applyValue / (bins)) & (f0 < (applyValue + 1) / (bins))); ");
+		p0  = sapply(0:(bn), " sum((f0 >= applyValue / (bn)) & (f0 < (applyValue + 1) / (bn))); ");
 	}
  	
 	if(sum(mi.size()) == 0){
-		pi = rep(0,bins);
+		pi = rep(0,bn);
 	}else{
 		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");				
 		// 	Make binned SFS
-		pi  = sapply(0:(bins), " sum((fi >= applyValue / (bins)) & (fi < (applyValue + 1) / (bins))); ");
+		pi  = sapply(0:(bn), " sum((fi >= applyValue / (bn)) & (fi < (applyValue + 1) / (bn))); ");
 	}
 
 	if (sum(mf5.size()) == 0){
-		pw = rep(0,(bins);
+		pw = rep(0,(bn);
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
-		pw  = sapply(0:((bins)-1), " sum((fw >= applyValue / (bins)) & (fw < (applyValue + 1) / (bins))); ");
+		pw  = sapply(0:((bn)-1), " sum((fw >= applyValue / (bn)) & (fw < (applyValue + 1) / (bn))); ");
 	}	
 
 
@@ -144,10 +145,10 @@ initialize() {
 		trueAlpha = "NA";
 	}
 	
-	f = (1:(bins)) / (bins);
+	f = (1:(bn)) / (bn);
 	line = "daf\tpi\tp0\tpw";
 	writeFile( fullPath + "/daf/daf" + fileName +  ".tsv.gz", line, compress=T);
-	for (i in 0:(bins-1)){
+	for (i in 0:(bn-1)){
 		line = f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i];
 			writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
 	}
