@@ -108,8 +108,8 @@ def parsePolDiv(path,N):
 
 	iteration = len(dafFiles)
 
-	sfs       = np.array(np.zeros(((N*2)-1,4)))
-	divs      = np.array(np.zeros((1,3)))
+	sfs       = np.array(np.zeros(((N*2),4)))
+	divs      = np.array(np.zeros((1,4)))
 	alphas    = np.array(np.zeros((iteration,3)))
 
 	for f in tqdm(range(1,iteration )):
