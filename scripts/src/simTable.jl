@@ -16,7 +16,7 @@ function analyticalApproach(param)
 end
 
 
-alpha = [ 0.4]
+alpha = [0.4]
 bgs   = [0.2,0.4,0.8,0.999]
 
 function simTable(alphas,bgsValues,pSize,length)

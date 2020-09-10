@@ -9,7 +9,9 @@ initialize() {
 	defineConstant("N", popSize);
 	defineConstant("fileName", nF);
 	defineConstant("fullPath", p );
+	defineConstant("bn", bins );
 	
+
 	// Command line arguments
 	defineConstant("wS", weaklyStrength); // 2Nes
 	defineConstant("sS", strongStrength); // 2Nes
@@ -17,7 +19,7 @@ initialize() {
 	
 	defineConstant("pBeneficialW", pposL);
 	defineConstant("pBeneficialS", pposH);
-	defineConstant('nc_length', asInteger(10^5));
+	defineConstant('nc_length', asInteger(5*10^4));
 	defineConstant('ex_length', asInteger(10^3));
 
 
@@ -45,8 +47,8 @@ initialize() {
 	initializeMutationType("m1", 0.5, "f", -457/(2*N)); // non-coding deleterious
     initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
 	initializeMutationType("m3", 0.5, "g", -457/(2*N), 0.184); // deleterious
-	initializeMutationType("m4", 0.5, "f", strongStrength/(2*N)); // strong beneficial
-	initializeMutationType("m5", 0.5, "f", weaklyStrength/(2*N)); // weakly beneficial
+	initializeMutationType("m4", 0.5, "f", sS/(2*N)); // strong beneficial
+	initializeMutationType("m5", 0.5, "f", wS/(2*N)); // weakly beneficial
     
 
 	initializeGenomicElementType("g1", c(m2,m3,m4,m5), c(0.25,0.75*(1-(pBeneficialS+pBeneficialW)),0.75*pBeneficialS,0.75*pBeneficialW)); // exon; relative proportion to get ~0.25 syn, ~0.75 non-syn
@@ -135,8 +137,9 @@ initialize() {
 // 58000 late() {
 22000 late() {
 	
+	
 	// Sample individuals
-	sampledIndividuals = p1.sampleIndividuals(661).genomes;  
+	sampledIndividuals = p1.sampleIndividuals(N).genomes;  
 	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
 	//m1muts = sim.mutationsOfType(m1);
 	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
@@ -151,33 +154,28 @@ initialize() {
 	mi  = c(mf3,mf4,mf5);
 
 	if( sum(m0.size()) == 0){
-		p0 = rep(0,661*2-1);
+		p0 = rep(0,bn);
 	}else{
 		// Get frequencies and cleaning fixed within sample
 		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
-		f0 = f0[f0>0 & f0<1];
-		p0  = sapply(1:(661*2-1), " sum((f0 >= applyValue / (661*2)) & (f0 < (applyValue + 1) / (661*2))); ");
-
+		p0  = sapply(0:(bn), " sum((f0 >= applyValue / (bn)) & (f0 < (applyValue + 1) / (bn))); ");
 	}
  	
 	if(sum(mi.size()) == 0){
-		pi = rep(0,661*2-1);
+		pi = rep(0,bn);
 	}else{
-		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");
-		fi = fi[fi>0 & fi<1];
-				
+		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");				
 		// 	Make binned SFS
-		pi  = sapply(1:(661*2-1), " sum((fi >= applyValue / (661*2)) & (fi < (applyValue + 1) / (661*2))); ");
-
-	
+		pi  = sapply(0:(bn), " sum((fi >= applyValue / (bn)) & (fi < (applyValue + 1) / (bn))); ");
 	}
 
 	if (sum(mf5.size()) == 0){
-		pw = rep(0,(661*2)-1);
+		pw = rep(0,bn);
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
-		pw  = sapply(1:((661*2)-1), " sum((fw >= applyValue / (661*2)) & (fw < (applyValue + 1) / (661*2))); ");
+		pw  = sapply(0:((bn)-1), " sum((fw >= applyValue / (bn)) & (fw < (applyValue + 1) / (bn))); ");
 	}	
+
 
    	// Get substitution info
 	subs = sim.substitutions;
@@ -193,9 +191,9 @@ initialize() {
 	trueAlphaS = (m4Subs.size()) / (m5Subs.size() + m4Subs.size() + m3Subs.size());
 
 	di = m5Subs.size() + m4Subs.size() + m3Subs.size();
-	ds = m4Subs.size();
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
+	ds = m4Subs.size();
 
 	if(isNAN(trueAlphaW)){
 		trueAlphaW = "NA";
@@ -207,10 +205,10 @@ initialize() {
 		trueAlpha = "NA";
 	}
 	
-	f = (1:(661*2-1)) / (661*2);
+	f = (1:(bn)) / (bn);
 	line = "daf\tpi\tp0\tpw";
 	writeFile( fullPath + "/daf/daf" + fileName +  ".tsv.gz", line, compress=T);
-	for (i in 0:(661*2-2)){
+	for (i in 0:(bn-1)){
 		line = f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i];
 			writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
 	}
@@ -225,7 +223,6 @@ initialize() {
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
 	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
-
 
 	// f = (1:(661*2-1)) / (661*2);
 	// catn("daf\tpi\tp0\tpw");
