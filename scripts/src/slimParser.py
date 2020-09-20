@@ -40,7 +40,7 @@ def parsePolDiv(path,N):
     divs      = np.array(np.zeros((1,4)))
     alphas    = np.array(np.zeros((iteration,3)))
 
-    for f in tqdm(range(1,iteration )):
+    for f in tqdm(range(0,iteration)):
         daf             = dt.fread(dafFiles[f], sep='\t',columns=dt.float64)
         daf[:,'pi_nopos'] = daf[:, dt.f.pi - dt.f.pw]
         daf = daf.to_numpy()
@@ -107,27 +107,33 @@ def parseSimulations(table,N):
 def randomString():
     return ''.join(random.choice(string.ascii_letters) for m in range(0,8))
 
-def priorsJulia(table,nSimulations,model,script="/home/jmurga/mkt/202004/scripts/src/sim.jl",regfile="rJob.sh",threads=4,replicas=[1,4],precomipledImg="/home/jmurga/mkt/202004/scripts/src/mktest.so",parallelPath="/home/jmurga/.conda/envs/abcmk/bin/parallel",abcreg="/home/jmurga/ABCreg/src/reg"):
+def priorsJulia(table,nSimulations,pSize,nSize,model,script="/home/jmurga/mkt/202004/scripts/src/sim.jl",regfile="rJob.sh",threads=4,replicas=[1,4],precomipledImg="/home/jmurga/mkt/202004/scripts/src/mktest.so",parallelPath="/home/jmurga/.conda/envs/abcmk/bin/parallel",abcreg="/home/jmurga/ABCreg/src/reg"):
     
     for index,row in table.iterrows():
         # Create reg file
-        # jobFile=re.sub('simulations','summStat',row.path) + '/' + regfile
-        output=re.sub('simulations','summStat',row.path)
-        os.makedirs(output,exist_ok=True)            
 
-        tmp = parallelPath + " -j" + str(threads) + " \"julia --sysimage " + precomipledImg + " " + script + " " + model + " " + row.path.split('/')[-1] + " " + str(nSimulations) + " {}" + "\" ::: {"+ str(replicas[0]) + ".."+ str(replicas[1]) + "}"
+        output=re.sub('simulations','summStat',row.path)
+        os.makedirs(output,exist_ok=True)
+
+        if precomipledImg is not None:
+            jl = "julia -J " + precomipledImg
+        else:
+            jl = "julia "
         
-        print(row.path,tmp)
+        tmp = parallelPath + " -j" + str(threads) + " \"" + jl + " " + script + " " + model + " " + row.path.split('/')[-1] + " " + str(pSize) + " " + str(nSize) + " " + str(nSimulations) + " {}" + "\" ::: {"+ str(replicas[0]) + ".."+ str(replicas[1]) + "}"
+        
+        print(tmp)
         process = subprocess.run(tmp, shell=True,check=True,executable='/bin/bash')
         
         #Merge files
-        tmpMerge = "cat " + output + "/" + row.path.split('/')[-1] + "_* > " + row.path.split('/')[-1] + ".tsv"
+        tmpMerge = "cat " + output + "/" + row.path.split('/')[-1] + "_* > " + output + '/' + row.path.split('/')[-1] + ".tsv"
+        print(tmpMerge)
         process = subprocess.run(tmpMerge, shell=True,check=True,executable='/bin/bash')
         
         #Delete files
         tmpDelete = "rm " + output +  "/" + row.path.split('/')[-1] + "_*"
+        # print(tmpDelete)
         process = subprocess.run(tmpDelete, shell=True,check=True,executable='/bin/bash')
-        # nNames     = [i for i in range(replicas[0],replicas[1])]
 
         p =  output + '/' + row.path.split('/')[-1] + '.tsv' 
         d =  output + '/' + 'sfs' + model + '.tsv'

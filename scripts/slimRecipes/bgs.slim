@@ -18,7 +18,7 @@ initialize() {
 	
 	defineConstant("pBeneficialW", pposL);
 	defineConstant("pBeneficialS", pposH);
-	defineConstant('nc_length', asInteger(5*10^4));
+	defineConstant('nc_length', asInteger(10^5));
 	defineConstant('ex_length', asInteger(codingLength));
 
 	// Solve analytical to obtain the mutation rate in non-coding locus 
@@ -45,8 +45,8 @@ initialize() {
 	initializeMutationType("m1", 0.5, "f", -457/(2*N)); // non-coding deleterious
     initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
 	initializeMutationType("m3", 0.5, "g", -457/(2*N), 0.184); // deleterious
-	initializeMutationType("m4", 0.5, "f", strongStrength/(2*N)); // strong beneficial
-	initializeMutationType("m5", 0.5, "f", weaklyStrength/(2*N)); // weakly beneficial
+	initializeMutationType("m4", 0.5, "f", sS/(2*N)); // strong beneficial
+	initializeMutationType("m5", 0.5, "f", wS/(2*N)); // weakly beneficial
     
 
 	initializeGenomicElementType("g1", c(m2,m3,m4,m5), c(0.25,0.75*(1-(pBeneficialS+pBeneficialW)),0.75*pBeneficialS,0.75*pBeneficialW)); // exon; relative proportion to get ~0.25 syn, ~0.75 non-syn
