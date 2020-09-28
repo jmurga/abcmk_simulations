@@ -54,9 +54,10 @@ end
 
 alpha = [0.4]
 bgs   = [0.2,0.4,0.8,0.999]
+bgs   = [0.4,0.999]
 
 simulations = simTable(alpha,bgs,parse(Int,ARGS[1]),parse(Int,ARGS[2]))
-printn(simulations)
+println(simulations)
 CSV.write("/home/jmurga/mkt/202004/rawData/simulations/" * ARGS[3] * ".tsv", simulations, delim='\t')
 
     

@@ -164,7 +164,8 @@ initialize() {
 	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
 
-
-	//sampledIndividuals.outputVCF(filePath='/home/jmurga/tennesen.vcf'); // AFR ancestry phase 3 sample of size 661
+	p1.outputVCFSample(20,filePath=fullPath + '/vcf/bgs_N_20_' + fileName + '.vcf'); 
+	p1.outputVCFSample(100,filePath=fullPath + '/vcf/bgs_N_100_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
+	p1.outputVCFSample(N,filePath=fullPath + '/vcf/bgs_N_all_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
 
 }

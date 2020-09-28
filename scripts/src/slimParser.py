@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '/home/jmurga/mkt/202004/scripts/src/pyAmkt.py')
+from pyAmkt import *
 import numpy as np
 import pandas as pd
 import datatable as dt
@@ -12,12 +15,14 @@ import glob
 from tqdm import tqdm
 import string
 
+
 def runSlim(recipe,simTable,pSize,codingLength,strongStrength,weaklyStrength,bins,replicas,threads,slimPath="/home/jmurga/.conda/envs/abcmk/bin/slim",parallelPath="/home/jmurga/.conda/envs/abcmk/bin/parallel"):
 
     bgs = []
     os.makedirs(simTable.path.values[0],exist_ok=True)    
     os.makedirs(simTable.path.values[0] + '/daf',exist_ok=True)    
     os.makedirs(simTable.path.values[0] + '/div',exist_ok=True)    
+    os.makedirs(simTable.path.values[0] + '/vcf',exist_ok=True)    
 
     path =  "\\" + "'" + simTable.path.values[0] + "\\" + "'" 
     tmp = parallelPath + " -j" + str(threads) + " \"" + slimPath + " -d popSize=" +str(pSize) + " -d codingLength=" + str(codingLength) + " -d bins=" + str(bins) + " -d weaklyStrength=" + str(weaklyStrength)  + " -d strongStrength=" + str(500)  + " -d bgsMutationRate=" + str(simTable.bgsThetaF.values[0])  + " -d pposL=" + str(simTable.pposL.values[0]) + " -d pposH=" + str(simTable.pposH.values[0]) + " -d p=" + path + " -d nF={} " + recipe + "\" ::: {"+ str(replicas[0]) + ".."+ str(replicas[1]) + "}"
@@ -73,41 +78,39 @@ def parsePolDiv(path,N):
     divs.to_pandas().to_csv(path + "/div.tsv",header=True,index=False,sep="\t")
     alphas.to_pandas().to_csv(path + "/alphas.tsv",header=True,index=False,sep="\t")
     
-def parseSimulations(table,N):
-    out = []; alphas = []
-
+def saveSimulatedAlphas(table,bins,reduced=False):
+    out = [];al = [];
     for index,row in table.iterrows():
-        try:
-            sfs, div ,alphas = parsePolDiv(row.path,N)
-            sfs.to_csv(row.path + "/sfs.tsv",header=True,index=False,sep="\t")
-            div.to_csv(row.path + "/div.tsv",header=True,index=False,sep="\t")
-            alphas.to_csv(row.path + "/alphas.tsv",header=True,index=False,sep="\t")
-                    
-            try:
-                cSfs = cumulativeSfs(sfs.to_numpy())
-                asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
-                asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
-            except:
-                cSfs = cumulativeSfs(reduceSfs(sfs.to_numpy(),100))
-                asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
-                asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
-
-            tmp = pd.DataFrame(np.mean(alphas,axis=0)).T
-            tmp['asymp'] = asymp[0]['alpha']
-            tmp['analyticalEstimation']= row.estimation
-            tmp['alpha_nopos']= asymp1[1]
-            tmp['alpha']= asymp2[1]
-            al.append(tmp)
-        except:
-            continue
-    df = pd.concat(out)
-    df = df.set_index(table.path.apply(lambda row: row.split('/')[-1]))
-    return(df)
+        print(row.path)
+        sfs = pd.read_csv(row.path + "/sfs.tsv",header=0,sep="\t")
+        div = pd.read_csv(row.path + "/div.tsv",header=0,sep="\t")
+        alphas = pd.read_csv(row.path + "/alphas.tsv",header=0,sep="\t")
+        alpha = (div.ds+div.dw)/div.di
+        
+        if(reduced == False):
+            cSfs = cumulativeSfs(sfs.to_numpy())
+            asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
+            asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
+            f = np.arange(1,sfs.shape[0]+1)
+        else:
+            cSfs = cumulativeSfs(reduceSfs(sfs.to_numpy(),bins))
+            asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
+            asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
+            f = np.arange(1,bins+1)
+            
+        tmp = pd.DataFrame({'trueAlpha':alpha,'asymp_nopos':asymp1[0]['alpha'],'asymp':asymp2[0]['alpha'],'analyticalEstimation':row.estimation,'path':row.path.split('/')[-1]})
+        
+        tmpAlpha = pd.DataFrame({'f':f,'alphas':asymp1[1],'sfs':np.repeat(['nopos'],f.shape[0]),'path':row.path.split('/')[-1]})
+        al.append(tmpAlpha)
+        tmpAlpha = pd.concat([tmpAlpha,pd.DataFrame({'f':f,'alphas':asymp2[1],'sfs':np.repeat(['pos'],f.shape[0]),'path':row.path.split('/')[-1]})])
+        al.append(tmpAlpha)
+        out.append(tmp)
+    return(pd.concat(out),pd.concat(al))
 
 def randomString():
     return ''.join(random.choice(string.ascii_letters) for m in range(0,8))
 
-def priorsJulia(table,nSimulations,pSize,nSize,model,script="/home/jmurga/mkt/202004/scripts/src/sim.jl",regfile="rJob.sh",threads=4,replicas=[1,4],precomipledImg="/home/jmurga/mkt/202004/scripts/src/mktest.so",parallelPath="/home/jmurga/.conda/envs/abcmk/bin/parallel",abcreg="/home/jmurga/ABCreg/src/reg"):
+def priorsJulia(table,nSimulations,pSize,nSize,model,bins,script="/home/jmurga/mkt/202004/scripts/src/sim.jl",regfile="rJob.sh",threads=4,replicas=[1,4],precomipledImg="/home/jmurga/mkt/202004/scripts/src/mktest.so",parallelPath="/home/jmurga/.conda/envs/abcmk/bin/parallel",abcreg="/home/jmurga/ABCreg/src/reg"):
     
     for index,row in table.iterrows():
         # Create reg file
@@ -120,13 +123,13 @@ def priorsJulia(table,nSimulations,pSize,nSize,model,script="/home/jmurga/mkt/20
         else:
             jl = "julia "
         
-        tmp = parallelPath + " -j" + str(threads) + " \"" + jl + " " + script + " " + model + " " + row.path.split('/')[-1] + " " + str(pSize) + " " + str(nSize) + " " + str(nSimulations) + " {}" + "\" ::: {"+ str(replicas[0]) + ".."+ str(replicas[1]) + "}"
+        tmp = parallelPath + " -j" + str(threads) + " \"" + jl + " " + script + " " + model + " " + row.path.split('/')[-1] + " " + str(pSize) + " " + str(nSize) + " " + str(bins) + " " + str(nSimulations) + " {}" + "\" ::: {"+ str(replicas[0]) + ".."+ str(replicas[1]) + "}"
         
         print(tmp)
         process = subprocess.run(tmp, shell=True,check=True,executable='/bin/bash')
         
         #Merge files
-        tmpMerge = "cat " + output + "/" + row.path.split('/')[-1] + "_* > " + output + '/' + row.path.split('/')[-1] + ".tsv"
+        tmpMerge = "cat " + output + "/" + row.path.split('/')[-1] + "_* > " + output + '/' "prior_" + str(bins) + ".tsv"
         print(tmpMerge)
         process = subprocess.run(tmpMerge, shell=True,check=True,executable='/bin/bash')
         
