@@ -129,14 +129,14 @@ def priorsJulia(table,nSimulations,pSize,nSize,model,bins,script="/home/jmurga/m
         process = subprocess.run(tmp, shell=True,check=True,executable='/bin/bash')
         
         #Merge files
-        tmpMerge = "cat " + output + "/" + row.path.split('/')[-1] + "_* > " + output + '/' "prior_" + str(bins) + ".tsv"
-        print(tmpMerge)
-        process = subprocess.run(tmpMerge, shell=True,check=True,executable='/bin/bash')
+        # tmpMerge = "cat " + output + "/" + row.path.split('/')[-1] + "_* > " + output + '/' "prior_" + str(bins) + ".tsv"
+        # print(tmpMerge)
+        # process = subprocess.run(tmpMerge, shell=True,check=True,executable='/bin/bash')
         
-        #Delete files
-        tmpDelete = "rm " + output +  "/" + row.path.split('/')[-1] + "_*"
-        # print(tmpDelete)
-        process = subprocess.run(tmpDelete, shell=True,check=True,executable='/bin/bash')
+        # #Delete files
+        # tmpDelete = "rm " + output +  "/" + row.path.split('/')[-1] + "_*"
+        # # print(tmpDelete)
+        # process = subprocess.run(tmpDelete, shell=True,check=True,executable='/bin/bash')
 
         p =  output + '/' + row.path.split('/')[-1] + '.tsv' 
         d =  output + '/' + 'sfs' + model + '.tsv'
@@ -159,5 +159,41 @@ def priorsJulia(table,nSimulations,pSize,nSize,model,bins,script="/home/jmurga/m
         # output = p.map(runJulia,tmp)
         # p.terminate()
 
-# def runJulia(simulatedList,juliaPath="/home/jmurga/julia-1.5.0/bin/julia"):
-#     subprocess.run([juliaPath] + ["--sysimage"] + ["/home/jmurga/mkt/202004/scripts/src/mktest.so"] +simulatedList)
+def abcOutputs(model,simulations):
+    
+    alphas = dict.fromkeys(simulations)
+    density = dict.fromkeys(simulations)
+    plots = dict.fromkeys(simulations)
+    
+    for n in simulations:
+
+        print(n)
+        sim= PATH + '/rawData/simulations/' + model + '/' + n
+        ss= PATH + '/rawData/summStat/' + model + '/' + n
+        # alphas[[n]] = fread(paste0(sim,"/alphas.tsv")) %>% summarize_all(mean)
+        tmp = pd.read_csv(sim + "/alphas.tsv",sep='\t') 
+        tmp[['analysis']] = n
+        tmp[['method']] = "simulation"
+        tmp.columns = ['alphaW','alphaS','alpha','analysis',"method"]
+
+        abcResults = glob.glob(ss + "/*.tangent*")
+        l = list()
+        d = list()
+
+        for i in abcResults:
+            df = pd.read_csv(i,sep='\t',names = ['alphaW','alphaS','alpha'])
+            df[['analysis']] = n
+            d.append(df)
+            l.append(np.mean(df).to_numpy())
+        
+        density[n] = pd.concat(d).reset_index(drop=True)
+        alphas[n] = pd.DataFrame(np.vstack(l),columns=['alphaW','alphaS','alpha'])
+
+        alphas[n][['analysis']] = n
+        alphas[n][['method']] = "abc"
+        alphas[n] = pd.concat([alphas[n],tmp])
+        
+    alphaToPlot = pd.concat(alphas.values())
+    densityToPlot = pd.concat(density.values())
+
+    return(alphaToPlot,densityToPlot)
