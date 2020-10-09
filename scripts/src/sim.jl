@@ -1,46 +1,46 @@
 using Analytical, CSV,DataFrames, ProgressMeter
 
 function summStats(param::Analytical.parameters,iter::Int64,div::Array,sfs::Array,output::String,b::Int64,c::Float64)
-    # @threads
+	# @threads
 
-        @showprogress for i in 1:iter
-        # for i in 1:iter
+		@showprogress for i in 1:iter
+		# for i in 1:iter
 
-            fac       = rand(-2:0.05:2,2)
-            afac      = 0.184*(2^fac[1])
-            bfac      = 0.000402*(2^fac[2])
+			fac       = rand(-2:0.05:2,2)
+			afac      = 0.184*(2^fac[1])
+			bfac      = 0.000402*(2^fac[2])
 
-            alTot     = rand(collect(0.05:0.01:0.4))
-            lfac      = rand(collect(0.1:0.1:0.9))
-            alLow     = round(alTot * lfac,digits=5)
+			alTot     = rand(collect(0.05:0.01:0.4))
+			lfac      = rand(collect(0.1:0.1:0.9))
+			alLow     = round(alTot * lfac,digits=5)
 
-            bgsIter(param,afac,bfac,alTot,alLow,div,sfs,output,b,c)
-        end
+			bgsIter(param,afac,bfac,alTot,alLow,div,sfs,output,b,c)
+		end
 end
 
 function bgsIter(param::Analytical.parameters,afac::Float64,bfac::Float64,alTot::Float64,alLow::Float64,div::Array,sfs::Array,output::String,b::Int64,c::Float64)
 
-        for j in param.bRange
-                # j = 0.999
-                param.al = afac; param.be = bfac;
-                param.alLow = alLow; param.alTot = alTot; param.B = j
+		for j in param.bRange
+				# j = 0.999
+				param.al = afac; param.be = bfac;
+				param.alLow = alLow; param.alTot = alTot; param.B = j
 
-                Analytical.set_theta_f!(param)
-                theta_f = param.theta_f
-                param.B = 0.999
-                Analytical.set_theta_f!(param)
-                Analytical.setPpos!(param)
-                param.theta_f = theta_f
-                param.B = j
-                #x,y,z = Analytical.alphaByFrequencies(param,d,sum(sfs[:,1:2],dims=2),100,0.999)
+				Analytical.set_theta_f!(param)
+				theta_f = param.theta_f
+				param.B = 0.999
+				Analytical.set_theta_f!(param)
+				Analytical.setPpos!(param)
+				param.theta_f = theta_f
+				param.B = j
+				#x,y,z = Analytical.alphaByFrequencies(param,d,sum(sfs[:,1:2],dims=2),100,0.999)
 
-                # x,y = Analytical.analyticalAlpha(param=param)
-                x,y,z = Analytical.alphaByFrequencies(param,div,sfs,b,c)
-                # println(z)
+				# x,y = Analytical.analyticalAlpha(param=param)
+				x,y,z = Analytical.alphaByFrequencies(param,div,sfs,b,c)
+				# println(z)
 
-                Analytical.summaryStatistics(output, DataFrame(z))
+				Analytical.summaryStatistics(output, DataFrame(z))
 
-        end
+		end
 end
 
 
