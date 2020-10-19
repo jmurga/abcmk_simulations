@@ -30,16 +30,26 @@ def runSlim(recipe,simTable,pSize,codingLength,strongStrength,weaklyStrength,bin
 
     process = subprocess.run(tmp, shell=True,check=True,executable='/bin/bash')
 
-def parsePolDiv(path,N):
+def parsePolDiv(path,N,sample=None):
     """
     slr, tupple array with daf and div data by element in list
     """
 
-    dafFiles = glob.glob(path + "/daf/*.tsv.gz")
-    divFiles = glob.glob(path + "/div/div*.tsv.gz")
-    alFiles  = glob.glob(path + "/div/al*.tsv.gz")
+    dafFiles = np.sort(glob.glob(path + "/daf/*.tsv.gz"))
+    divFiles = np.sort(glob.glob(path + "/div/div*.tsv.gz"))
+    alFiles  = np.sort(glob.glob(path + "/div/al*.tsv.gz"))
 
-    iteration = len(dafFiles)
+    if sample is not None:
+        tmp = np.arange(0,len(dafFiles))
+        N   = np.sort(np.random.choice(tmp,sample,replace=False))
+        dafFiles = dafFiles[N]
+        divFiles = divFiles[N]
+        alFiles  = alFiles[N]
+
+        iteration= len(dafFiles)
+    else:
+        iteration = len(dafFiles)
+    
 
     sfs       = np.array(np.zeros((N,4)))
     divs      = np.array(np.zeros((1,4)))

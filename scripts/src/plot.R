@@ -1,6 +1,6 @@
 library(ggplot2)
 
-analysis = c("noDemog_0.4_0.1_0.8","noDemog_0.4_0.1_0.999","noDemog_0.4_0.2_0.8","noDemog_0.4_0.2_0.999","noDemog_0.4_0.3_0.8","noDemog_0.4_0.3_0.999")
+analysis = c("noDemog_0.4_0.1_0.2","noDemog_0.4_0.2_0.2","noDemog_0.4_0.3_0.2","noDemog_0.4_0.1_0.4","noDemog_0.4_0.2_0.4","noDemog_0.4_0.3_0.4","noDemog_0.4_0.1_0.8","noDemog_0.4_0.2_0.8","noDemog_0.4_0.3_0.8","noDemog_0.4_0.2_0.999","noDemog_0.4_0.1_0.999","noDemog_0.4_0.3_0.999")
 
 analysis = c("noDemog_0.4_0.2_0.2")
 alphas = list()
