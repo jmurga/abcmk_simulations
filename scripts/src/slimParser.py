@@ -41,10 +41,10 @@ def parsePolDiv(path,N,sample=None):
 
     if sample is not None:
         tmp = np.arange(0,len(dafFiles))
-        N   = np.sort(np.random.choice(tmp,sample,replace=False))
-        dafFiles = dafFiles[N]
-        divFiles = divFiles[N]
-        alFiles  = alFiles[N]
+        idx   = np.sort(np.random.choice(tmp,sample,replace=False))
+        dafFiles = dafFiles[idx]
+        divFiles = divFiles[idx]
+        alFiles  = alFiles[idx]
 
         iteration= len(dafFiles)
     else:
