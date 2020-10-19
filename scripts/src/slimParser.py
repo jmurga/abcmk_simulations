@@ -93,16 +93,24 @@ def parsePolDiv(path,N,sample=None):
         divs.to_pandas().to_csv(path + "/div.tsv",header=True,index=False,sep="\t")
         alphas.to_pandas().to_csv(path + "/alphas.tsv",header=True,index=False,sep="\t")
     
-def saveSimulatedAlphas(table,bins,reduced=False):
+def saveSimulatedAlphas(table,bins,reduced=None,sample=None):
     out = [];al = [];
     for index,row in table.iterrows():
         print(row.path)
-        sfs = pd.read_csv(row.path + "/sfs.tsv",header=0,sep="\t")
-        div = pd.read_csv(row.path + "/div.tsv",header=0,sep="\t")
-        alphas = pd.read_csv(row.path + "/alphas.tsv",header=0,sep="\t")
-        alpha = (div.ds+div.dw)/div.di
+
+        if sample is not None:
+            sfs = pd.read_csv(row.path + "/sfs"+str(sample)+".tsv",header=0,sep="\t")
+            div = pd.read_csv(row.path + "/div"+str(sample)+".tsv",header=0,sep="\t")
+            alphas = pd.read_csv(row.path + "/alphas"+str(sample)+".tsv",header=0,sep="\t")
+            alpha = (div.ds+div.dw)/div.di
         
-        if(reduced == False):
+        else:
+            sfs = pd.read_csv(row.path + "/sfs.tsv",header=0,sep="\t")
+            div = pd.read_csv(row.path + "/div.tsv",header=0,sep="\t")
+            alphas = pd.read_csv(row.path + "/alphas.tsv",header=0,sep="\t")
+            alpha = (div.ds+div.dw)/div.di
+        
+        if(reduced is not None):
             cSfs = cumulativeSfs(sfs.to_numpy())
             asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
             asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
