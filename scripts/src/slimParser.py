@@ -84,9 +84,14 @@ def parsePolDiv(path,N,sample=None):
     divs      = dt.Frame({'di':divs[0],'d0':divs[1],'dw':divs[2],'ds':divs[3]})
     alphas    = dt.Frame(alphas,names=['trueAlphaW','trueAlphaS','trueAlpha'])
 
-    sfs.to_pandas().to_csv(path + "/sfs.tsv",header=True,index=False,sep="\t")
-    divs.to_pandas().to_csv(path + "/div.tsv",header=True,index=False,sep="\t")
-    alphas.to_pandas().to_csv(path + "/alphas.tsv",header=True,index=False,sep="\t")
+    if sample is not None:
+        sfs.to_pandas().to_csv(path + "/sfs" + str(sample) + ".tsv",header=True,index=False,sep="\t")
+        divs.to_pandas().to_csv(path + "/div" + str(sample) + ".tsv",header=True,index=False,sep="\t")
+        alphas.to_pandas().to_csv(path + "/alphas"+ str(sample) + ".tsv",header=True,index=False,sep="\t")
+    else:
+        sfs.to_pandas().to_csv(path + "/sfs.tsv",header=True,index=False,sep="\t")
+        divs.to_pandas().to_csv(path + "/div.tsv",header=True,index=False,sep="\t")
+        alphas.to_pandas().to_csv(path + "/alphas.tsv",header=True,index=False,sep="\t")
     
 def saveSimulatedAlphas(table,bins,reduced=False):
     out = [];al = [];
