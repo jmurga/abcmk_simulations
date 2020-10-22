@@ -2,14 +2,15 @@ library(ggplot2)
 
 analysis = c("noDemog_0.4_0.1_0.2","noDemog_0.4_0.2_0.2","noDemog_0.4_0.3_0.2","noDemog_0.4_0.1_0.4","noDemog_0.4_0.2_0.4","noDemog_0.4_0.3_0.4","noDemog_0.4_0.1_0.8","noDemog_0.4_0.2_0.8","noDemog_0.4_0.3_0.8","noDemog_0.4_0.2_0.999","noDemog_0.4_0.1_0.999","noDemog_0.4_0.3_0.999")
 
-analysis = c("noDemog_0.4_0.2_0.2")
+analysis = c("noDemog_0.4_0.1_0.2")
+bins=50
 alphas = list()
 output = list()
 density = list()
 for(n in analysis){
 	print(n)
 	sim= paste0("/home/jmurga/mkt/202004/rawData/simulations/noDemog/",n)
-	ss = paste0("/home/jmurga/mkt/202004/rawData/summStat/noDemog/",n)
+	ss = paste0("/home/jmurga/mkt/202004/rawData/summStat/noDemog/bins",bins,"/",n)
 	alphas[[n]] = fread(paste0(sim,"/alphas.tsv"))
 	alphas[[n]]$analysis = n
 	alphas[[n]]$method = "simulation"

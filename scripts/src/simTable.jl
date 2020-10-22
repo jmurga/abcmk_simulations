@@ -24,12 +24,12 @@ function simTable(alphas,bgsValues,pSize,nSize,l)
 	for a in 1:size(alphas,1)
 		for b in 1:size(bgsValues,1)
 
-			adap1 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.25)
+			adap1 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=5,gH=500,alTot=alphas[a],alLow=alphas[a]*0.25)
 
 
-			adap2 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.5)
+			adap2 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=5,gH=500,alTot=alphas[a],alLow=alphas[a]*0.5)
 
-			adap3 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=10,gH=500,alTot=alphas[a],alLow=alphas[a]*0.75)
+			adap3 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=5,gH=500,alTot=alphas[a],alLow=alphas[a]*0.75)
 
 			Analytical.binomOp!(adap1)
 			Analytical.binomOp!(adap2)
@@ -52,9 +52,9 @@ function simTable(alphas,bgsValues,pSize,nSize,l)
 	return out
 end
 
-alpha = [0.4]
+alpha = [0.2]
 bgs   = [0.2,0.4,0.8,0.999]
-# bgs   = [0.4,0.999]
+bgs   = [0.999]
 
 simulations = simTable(alpha,bgs,parse(Int,ARGS[1]),parse(Int,ARGS[2]),parse(Int,ARGS[3]))
 println(simulations)

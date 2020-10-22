@@ -93,7 +93,7 @@ def parsePolDiv(path,N,sample=None):
         divs.to_pandas().to_csv(path + "/div.tsv",header=True,index=False,sep="\t")
         alphas.to_pandas().to_csv(path + "/alphas.tsv",header=True,index=False,sep="\t")
     
-def saveSimulatedAlphas(table,bins,reduced=None,sample=None):
+def saveSimulatedAlphas(table,bins=None,sample=None):
     out = [];al = [];
     for index,row in table.iterrows():
         print(row.path)
@@ -110,21 +110,20 @@ def saveSimulatedAlphas(table,bins,reduced=None,sample=None):
             alphas = pd.read_csv(row.path + "/alphas.tsv",header=0,sep="\t")
             alpha = (div.ds+div.dw)/div.di
         
-        if(reduced is not None):
-            cSfs = cumulativeSfs(sfs.to_numpy())
-            asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
-            asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
-            f = np.arange(1,sfs.shape[0]+1)
-        else:
+        if(bins is not None):
             cSfs = cumulativeSfs(reduceSfs(sfs.to_numpy(),bins))
             asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
             asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
             f = np.arange(1,bins+1)
-            
+        else:
+            cSfs = cumulativeSfs(sfs.to_numpy())
+            asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
+            asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)
+            f = np.arange(1,sfs.shape[0]+1)
+
         tmp = pd.DataFrame({'trueAlpha':alpha,'asymp_nopos':asymp1[0]['alpha'],'asymp':asymp2[0]['alpha'],'analyticalEstimation':row.estimation,'path':row.path.split('/')[-1]})
         
         tmpAlpha = pd.DataFrame({'f':f,'alphas':asymp1[1],'sfs':np.repeat(['nopos'],f.shape[0]),'path':row.path.split('/')[-1]})
-        al.append(tmpAlpha)
         tmpAlpha = pd.concat([tmpAlpha,pd.DataFrame({'f':f,'alphas':asymp2[1],'sfs':np.repeat(['pos'],f.shape[0]),'path':row.path.split('/')[-1]})])
         al.append(tmpAlpha)
         out.append(tmp)
