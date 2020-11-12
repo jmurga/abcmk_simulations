@@ -12,32 +12,31 @@ function analyticalApproach(param)
 	param.B = B
 	x,y = Analytical.analyticalAlpha(param=param)
 
-	return round.(hcat(theta_f/(4*param.N),param.pposL,param.pposH,param.alLow,param.alTot,round(y[end],digits=5),param.B),digits=12)
-end
+	mu = theta_f/(4*param.N)
 
+	return hcat(mu,param.pposL,param.pposH,param.alLow,param.alTot,round(y[end],digits=5),param.B)
+end
 
 function simTable(alphas,bgsValues,pSize,nSize,l)
 
 	out = zeros(size(alphas,1)*size(bgsValues,1)*3,7)
 	it = 1
 
+	adap = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[1],gL=10,gH=500,alTot=0.4,alLow=0.2,bRange=reshape(bgsValues,1,size(bgsValues,1)))
+	Analytical.binomOp!(adap)
+
 	for a in 1:size(alphas,1)
 		for b in 1:size(bgsValues,1)
 
-			adap1 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=5,gH=500,alTot=alphas[a],alLow=alphas[a]*0.25)
+			adap.B = bgsValues[b]
 
-
-			adap2 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=5,gH=500,alTot=alphas[a],alLow=alphas[a]*0.5)
-
-			adap3 = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[b],gL=5,gH=500,alTot=alphas[a],alLow=alphas[a]*0.75)
-
-			Analytical.binomOp!(adap1)
-			Analytical.binomOp!(adap2)
-			Analytical.binomOp!(adap3)
-			r1 = analyticalApproach(adap1)
-			r2 = analyticalApproach(adap2)
-			r3 = analyticalApproach(adap3)
-			
+			adap.alLow = alphas[a]*0.25
+			r1 = analyticalApproach(adap)
+			adap.alLow = alphas[a]*0.5
+			r2 = analyticalApproach(adap)
+			adap.alLow = alphas[a]*0.75
+			r3 = analyticalApproach(adap)
+				
 			out[it,:] = r1
 			out[it+1,:] = r2
 			out[it+2,:] = r3
@@ -52,12 +51,11 @@ function simTable(alphas,bgsValues,pSize,nSize,l)
 	return out
 end
 
-alpha = [0.2]
+alpha = [0.4]
 bgs   = [0.2,0.4,0.8,0.999]
-bgs   = [0.999]
 
 simulations = simTable(alpha,bgs,parse(Int,ARGS[1]),parse(Int,ARGS[2]),parse(Int,ARGS[3]))
-println(simulations)
+
 CSV.write("/home/jmurga/mkt/202004/rawData/simulations/" * ARGS[4] * ".tsv", simulations, delim='\t')
 
-	
+

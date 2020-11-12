@@ -7,7 +7,7 @@ import pandas as pd
 # DIV SHOULD BE A NUMPY ARRAY CONTAINING DI, D0, MI, M0
 # CUMULATIVESFS. DESCRIBED AT HTTPS://STATIC-CONTENT.SPRINGER.COM/ESM/ART%3A10.1038%2FS41559-019-0890-6/MEDIAOBJECTS/41559_2019_890_MOESM1_ESM.PDF USING ALL THE INFORMATION ABOVE THE FREQUENCY. THE FIRST CATEGORY AT SFS INCLUDE PI
 
-def amkt(daf, div, xlow, xhigh):
+def amkt(daf, div, xlow=0, xhigh=1):
     output = {}
 
     dRatio = float(div[1] / div[0])
@@ -39,26 +39,30 @@ def amkt(daf, div, xlow, xhigh):
                 popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt, method='dogbox')
                 # print('Fit: dogbox')
             except:
-                if not popt:
-                    # print('Could not fit any unbounded')
-                    raise RuntimeError("Couldn't fit any method")
+                popt=None
 
-    output['a'] = popt[0]
-    output['b'] = popt[1]
-    output['c'] = popt[2]
+    if popt is None:
+        output = {'a': np.nan,'b':np.nan,'c': np.nan,'alpha':np.nan,'ciLow':np.nan,'ciHigh':np.nan}
 
-    # alpha for predicted model
-    output['alpha'] = exp_model(1.0, output['a'], output['b'], output['c'])
-    
-    # Compute confidence intervals based on simulated data (MC-SOERP)
-    vcov = pd.concat([pd.DataFrame([0] * 4).transpose(),
-                      pd.concat([pd.DataFrame([0] * 4), pd.DataFrame(pcov)], axis=1, ignore_index=True)],
-                     axis=0, ignore_index=True)
-    vcov = vcov.iloc[0:4, :].values
+    else:
+        output['a'] = popt[0]
+        output['b'] = popt[1]
+        output['c'] = popt[2]
 
-    simpars = np.random.multivariate_normal(mean=[1.0, output['a'], output['b'], output['c']], cov=vcov, size=10000, check_valid='raise')  # same as R implementation
+        # alpha for predicted model
+        output['alpha'] = exp_model(1.0, output['a'], output['b'], output['c'])
+        
+        # Compute confidence intervals based on simulated data (MC-SOERP)
+        vcov = pd.concat([pd.DataFrame([0] * 4).transpose(),
+                          pd.concat([pd.DataFrame([0] * 4), pd.DataFrame(pcov)], axis=1, ignore_index=True)],
+                         axis=0, ignore_index=True)
+        vcov = vcov.iloc[0:4, :].values
 
-    output['ciLow'], output['ciHigh'] = np.quantile([exp_model(x[0], x[1], x[2], x[3]) for x in simpars], [0.025, 0.975])
+        try:
+            simpars = np.random.multivariate_normal(mean=[1.0, output['a'], output['b'], output['c']], cov=vcov, size=10000, check_valid='raise')  # same as R implementation
+            output['ciLow'], output['ciHigh'] = np.quantile([exp_model(x[0], x[1], x[2], x[3]) for x in simpars], [0.025, 0.975])
+        except:
+            output['ciLow'], output['ciHigh']= np.nan, np.nan
 
     return output,alpha[trim]
 

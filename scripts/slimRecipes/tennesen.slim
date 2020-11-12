@@ -6,7 +6,7 @@ initialize() {
 	//mu = Analytical.set_theta_f(adap)
 	
 	// rescale and not, check 
-	defineConstant("N", popSize);
+	defineConstant("N", 7310);
 	defineConstant("S", sampleSize);
 	defineConstant("fileName", nF);
 	defineConstant("fullPath", p);
@@ -45,7 +45,7 @@ initialize() {
 	//initializeMutationType("m2", 0.5, "g", -457/(2*N), 0.184); // non-coding deleterious
 
 	initializeMutationType("m1", 0.5, "f", -457/(2*N)); // non-coding deleterious
-    initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
+	initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
 	initializeMutationType("m3", 0.5, "g", -457/(2*N), 0.184); // deleterious
 	initializeMutationType("m4", 0.5, "f", sS/(2*N)); // strong beneficial
 	initializeMutationType("m5", 0.5, "f", wS/(2*N)); // weakly beneficial
@@ -83,13 +83,13 @@ initialize() {
 // This occurs 148000 years (5920) generations ago
 // 52080 { 5.5
 214080 { 
-	p1.setSubpopulationSize(1447); 
+	p1.setSubpopulationSize(14474); 
 }
 
 // Split non-Africans from Africans and set up migration between them
 // Thi1s occurs 51000 years (2040 generations) ago
 217960 {
-	sim.addSubpopSplit("p2", 1860, p1);
+	sim.addSubpopSplit("p2", 1861, p1);
 	p1.setMigrationRates(c(p2), c(15e-5));
 	p2.setMigrationRates(c(p1), c(15e-5));
 }
@@ -97,7 +97,7 @@ initialize() {
 // Second european bottleneck and population growth
 // This occurs 23000 years (920 generations) ago
 219080 {
-	p2.setSubpopulationSize(1030);  // reduce European size
+	p2.setSubpopulationSize(1032);  // reduce European size
 	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
 	p1.setMigrationRates(c(p2), c(2.5e-5));
 	p2.setMigrationRates(c(p1), c(2.5e-5));
@@ -107,7 +107,7 @@ initialize() {
 // Where N(0) is the base subpopulation size and t = gen - 57080:
 // N(Europe) should be int(round(N(0) * e^(0.0038*t)))
 // 57080:57795 {
-219080:219790 {
+219080:219795 {
 
 	// t = sim.generation - 57080;
 	t = sim.generation - 219080;
@@ -120,12 +120,12 @@ initialize() {
 
 // Second exponential growth
 // 57795:58000 {
-219790:220000 {
+219795:220000 {
 
-	t = sim.generation - 219790;
+	t = sim.generation - 219795;
 	//exp rescaled from 0.0166; 0.0195
-	p1_size = round(14470 * exp(0.0166 * t));
-	p2_size = round(9390 * exp(0.01095 * t));
+	p1_size = round(14474 * exp(0.0166 * t));
+	p2_size = round(9390 * exp(0.0195 * t));
 
 	p1.setSubpopulationSize(asInteger(p1_size));	
 	p2.setSubpopulationSize(asInteger(p2_size));
@@ -140,7 +140,7 @@ initialize() {
 	
 	
 	// Sample individuals
-	sampledIndividuals = p1.sampleIndividuals(661).genomes;  
+	sampledIndividuals = p1.sampleIndividuals(S).genomes;  
 	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
 	//m1muts = sim.mutationsOfType(m1);
 	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
@@ -175,7 +175,7 @@ initialize() {
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
 		pw  = sapply(0:((bn)-1), " sum((fw >= applyValue / (bn)) & (fw < (applyValue + 1) / (bn))); ");
-	}	
+	}
 
 
    	// Get substitution info
