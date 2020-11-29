@@ -3,9 +3,7 @@ library(data.table)
 
 analysis = c("noDemog_0.4_0.1_0.2","noDemog_0.4_0.2_0.2","noDemog_0.4_0.3_0.2","noDemog_0.4_0.1_0.4","noDemog_0.4_0.2_0.4","noDemog_0.4_0.3_0.4","noDemog_0.4_0.1_0.8","noDemog_0.4_0.2_0.8","noDemog_0.4_0.3_0.8","noDemog_0.4_0.1_0.999","noDemog_0.4_0.2_0.999","noDemog_0.4_0.3_0.999")
 
-bins=999
-
-plotPosterior = function(analysis,bins){
+plotPosterior = function(analysis,ne){
 
 	alphas = list()
 	out = list()
@@ -19,8 +17,8 @@ plotPosterior = function(analysis,bins){
 		bgs = unlist(strsplit(n,"_"))[4]
 		aw = unlist(strsplit(n,"_"))[3]
 
-		sim= paste0("/home/jmurga/mkt/202004/rawData/simulations/",model,"/",n)
-		ss = paste0("/home/jmurga/mkt/202004/rawData/summStat/",model,"/bins",bins,"/",n)
+		sim= paste0("/home/jmurga/mkt/202004/rawData/simulations/",model,"/ne",ne,"/",n)
+		ss = paste0("/home/jmurga/mkt/202004/rawData/summStat/",model,"/",n)
 
 		l <- vector("list", length = length(list.files(ss,pattern='posterior')))
 		a <- list()
@@ -32,13 +30,13 @@ plotPosterior = function(analysis,bins){
 		# tmp$alphaWeak = aw
 		# names(tmp) = c('alphaW','alphaS','alpha','analysis',"method","B","alphaWeak")	
 
-		for(i in list.files(ss,pattern='tangent')){
+		for(i in list.files(ss,pattern='posterior')){
 			df <- fread(paste0(ss,"/",i))
 			df$analysis = n
 			density[[n]][[i]] = df
 			l[[i]] <-  transpose(data.table(colMeans(x=df[,1:3], na.rm = TRUE)))
 
-			alpha = tmp[sample(.N,50,replace=F)] %>% summarize_all(sum) %>% mutate(alphaW=dw/di,alphaS=ds/di,alpha=(ds+dw)/di) %>% select(alphaW,alphaS,alpha)
+			alpha = tmp[sample(.N,500,replace=F)] %>% summarize_all(sum) %>% mutate(alphaW=dw/di,alphaS=ds/di,alpha=(ds+dw)/di) %>% select(alphaW,alphaS,alpha)
 
 			a[[i]] = alpha
 			a[[i]]$analysis = n
@@ -114,13 +112,16 @@ plotSimulatedAlphas = function(f,title,output="/home/jmurga/mkt/202004/results/s
 		ggsave(p,filename=paste0("/home/jmurga/mkt/202004/results/simulations/alphasSimulations/",output,".jpg"),dpi=600)
 
 }
-r = plotPosterior(analysis,bins)
+
+r = plotPosterior(analysis)
 
 df=r$out
 
 df$alphaWeak = factor(df$alphaWeak, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))	
 df$B = factor(df$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))
 p = ggplot(df,aes(x=variable,y=value,fill=method)) + geom_boxplot() + scale_fill_manual(values=c("#ab2710","#e2bd9a")) + facet_grid(~analysis)+ theme_bw() + facet_grid(B~alphaWeak,labeller=label_parsed) +scale_x_discrete(labels = c(expression(alpha[w]),expression(alpha[s]),expression(alpha)))
+
+ggsave(p,filename="/home/jmurga/tennesenABC.svg")
 
 ggsave(p,filename="/home/jmurga/mkt/202004/results/abc/boxplots/noDemogABC.svg")
 ggsave(p,filename="/home/jmurga/mkt/202004/results/abc/boxplots/noDemogABC.jpg",dpi=600)
