@@ -133,11 +133,12 @@ def saveSimulatedAlphas(table,l=0,h=1,bins=None,sample=None):
 			asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)	
 			f = np.arange(1,asymp1[1].shape[0]+1)/asymp1[1].shape[0]
 		
-		tmp = pd.DataFrame({'trueAlpha':alpha,'asymp_nopos':asymp1[0]['alpha'],'asymp':asymp2[0]['alpha'],'analyticalEstimation':row.estimation,'path':row.path.split('/')[-1]})
+		tmp = pd.DataFrame({'trueAlpha':alpha,'asymp_nopos':asymp1[0]['alpha'],'asymp':asymp2[0]['alpha'],'analyticalEstimation':row.estimation,'path':row.path.split('/')[-1],'analysis':row.analysis})
 		
-		tmpAlpha = pd.DataFrame({'f':f,'alphas':asymp1[1],'B':np.repeat(row.B,f.shape[0]),'alphaW':np.repeat(row.alphaW,f.shape[0]),'sfs':np.repeat(['Neutral + deleterious'],f.shape[0]),'path':row.path.split('/')[-1]})
+		tmpAlpha = pd.DataFrame({'f':f,'alphas':asymp1[1],'B':np.repeat(row.B,f.shape[0]),'alphaW':np.repeat(row.alphaW,f.shape[0]),'sfs':np.repeat(['Neutral + deleterious'],f.shape[0]),'path':row.path.split('/')[-1],'analysis':row.analysis})
 
-		tmpAlpha = pd.concat([tmpAlpha,pd.DataFrame({'f':f,'alphas':asymp2[1],'sfs':np.repeat(['All alleles'],f.shape[0]),'B':np.repeat(row.B,f.shape[0]),'alphaW':np.repeat(row.alphaW,f.shape[0]),'path':row.path.split('/')[-1]})])
+		tmpAlpha = pd.concat([tmpAlpha, pd.DataFrame({'f': f, 'alphas': asymp2[1], 'sfs':np.repeat(['All alleles'], f.shape[0]), 'B':np.repeat(
+			row.B, f.shape[0]), 'alphaW':np.repeat(row.alphaW, f.shape[0]), 'path':row.path.split('/')[-1], 'analysis':row.analysis})])
 		al.append(tmpAlpha)
 		out.append(tmp)
 	return(pd.concat(out),pd.concat(al))

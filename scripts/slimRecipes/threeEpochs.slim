@@ -5,12 +5,11 @@ initialize() {
 	//adap = Analytical.parameters(N=1000,n=661,gam_neg=-457,Lf=2*10^5, B=0.999)
 	//mu = Analytical.set_theta_f(adap)
 
-	// rescale and not, check 
-	defineConstant("N", popSize);
-	defineConstant("S", sampleSize);
+	// rescale and not, check
+	defineConstant("N", 2500);
 	defineConstant("fileName", nF);
 	defineConstant("fullPath", p);
-	defineConstant("bn", (S*2)-1);	
+	defineConstant("bn", (N*2)-1);
 
 	// Command line arguments
 	defineConstant("wS", weaklyStrength); // 2Nes
@@ -76,11 +75,19 @@ initialize() {
 	sim.addSubpop("p1", N); 
 }
 
+198000 {
+	p1.setSubpopulationSize(500);
+}
+
+205400{
+	p1.setSubpopulationSize(2500);
+}
+
 // Generation 5800 is the present. Output and terminate.
 220000 late() {
 	
 	// Sample individuals
-	sampledIndividuals = p1.sampleIndividuals(N).genomes;  
+	sampledIndividuals = p1.sampleIndividuals(500).genomes;  
 	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
 	//m1muts = sim.mutationsOfType(m1);
 	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
@@ -163,10 +170,12 @@ initialize() {
 	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
 	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
+	catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
 
-	p1.outputVCFSample(20,filePath=fullPath + '/vcf/bgs_N_20_' + fileName + '.vcf'); 
-	p1.outputVCFSample(100,filePath=fullPath + '/vcf/bgs_N_100_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
-	p1.outputVCFSample(N,filePath=fullPath + '/vcf/bgs_N_all_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
+	// p1.outputVCFSample(20,filePath=fullPath + '/vcf/bgs_N_20_' + fileName + '.vcf'); 
+	// p1.outputVCFSample(100,filePath=fullPath + '/vcf/bgs_N_100_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
+	// p1.outputVCFSample(N,filePath=fullPath + '/vcf/bgs_N_all_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
 
 }
+

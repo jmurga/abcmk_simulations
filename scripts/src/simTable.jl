@@ -3,12 +3,12 @@ using Analytical, CSV, DataFrames
 function analyticalApproach(param)
 
 	B = param.B
-	Analytical.set_theta_f!(param)
-	theta_f = param.theta_f
+	Analytical.setThetaF!(param)
+	theta_f = param.thetaF
 	param.B = 0.999
-	Analytical.set_theta_f!(param)
+	Analytical.setThetaF!(param)
 	Analytical.setPpos!(param)
-	param.theta_f = theta_f
+	param.thetaF = theta_f
 	param.B = B
 	x,y = Analytical.analyticalAlpha(param=param)
 
@@ -22,7 +22,7 @@ function simTable(alphas,bgsValues,pSize,nSize,l)
 	out = zeros(size(alphas,1)*size(bgsValues,1)*3,7)
 	it = 1
 
-	adap = Analytical.parameters(N=pSize,n=nSize,gam_neg=-457,Lf=l, B=bgsValues[1],gL=10,gH=500,alTot=0.4,alLow=0.2,bRange=reshape(bgsValues,1,size(bgsValues,1)))
+	adap = Analytical.parameters(N=pSize,n=nSize,gamNeg=-457,Lf=l, B=bgsValues[1],gL=10,gH=500,alTot=0.4,alLow=0.2,bRange=reshape(bgsValues,1,size(bgsValues,1)))
 	Analytical.binomOp!(adap)
 
 	for a in 1:size(alphas,1)
@@ -52,7 +52,8 @@ function simTable(alphas,bgsValues,pSize,nSize,l)
 end
 
 alpha = [0.4]
-bgs   = [0.2,0.4,0.8,0.999]
+# bgs   = [0.2,0.4,0.8,0.999]
+bgs   = [0.999]
 
 simulations = simTable(alpha,bgs,parse(Int,ARGS[1]),parse(Int,ARGS[2]),parse(Int,ARGS[3]))
 

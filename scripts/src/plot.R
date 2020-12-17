@@ -3,90 +3,85 @@ library(data.table)
 
 analysis = c("noDemog_0.4_0.1_0.2","noDemog_0.4_0.2_0.2","noDemog_0.4_0.3_0.2","noDemog_0.4_0.1_0.4","noDemog_0.4_0.2_0.4","noDemog_0.4_0.3_0.4","noDemog_0.4_0.1_0.8","noDemog_0.4_0.2_0.8","noDemog_0.4_0.3_0.8","noDemog_0.4_0.1_0.999","noDemog_0.4_0.2_0.999","noDemog_0.4_0.3_0.999")
 
-plotPosterior = function(analysis,ne){
+analysis = c("tennesen_0.4_0.3_0.2","tennesen_0.4_0.3_0.4","tennesen_0.4_0.2_0.8","tennesen_0.4_0.3_0.8","tennesen_0.4_0.1_0.999","tennesen_0.4_0.2_0.999","tennesen_0.4_0.3_0.999")
 
-	alphas = list()
+plotPosteriorDensitiy = function(analysis,model,ne=500,path="/home/jmurga/mkt/202004/rawData/"){
+
+	# analysis = c("noDemog_0.4_0.1_0.8","noDemog_0.4_0.2_0.8","noDemog_0.4_0.1_0.999","noDemog_0.4_0.2_0.999","noDemog_0.4_0.3_0.999")
+	# model="noDemog";ne=500;path="/home/jmurga/mkt/202004/rawData/"
 	out = list()
 	density = list()
-	output = list()
-
-	model = unlist(strsplit(analysis,"_"))[1]
+	segment = list()
 
 	for(n in analysis){
-		print(n)		
+
+		alphaWeak = unlist(strsplit(n,"_"))[3]
 		bgs = unlist(strsplit(n,"_"))[4]
-		aw = unlist(strsplit(n,"_"))[3]
 
-		sim= paste0("/home/jmurga/mkt/202004/rawData/simulations/",model,"/ne",ne,"/",n)
-		ss = paste0("/home/jmurga/mkt/202004/rawData/summStat/",model,"/",n)
-
-		l <- vector("list", length = length(list.files(ss,pattern='posterior')))
-		a <- list()
-		tmp = fread(paste0(sim,"/divTable.tsv"))
-		# tmp = fread(paste0(sim,"/alphas.tsv"))
-		# tmp$analysis = n
-		# tmp$method = 'simulations'
-		# tmp$B = bgs
-		# tmp$alphaWeak = aw
-		# names(tmp) = c('alphaW','alphaS','alpha','analysis',"method","B","alphaWeak")	
-
-		for(i in list.files(ss,pattern='posterior')){
-			df <- fread(paste0(ss,"/",i))
-			df$analysis = n
-			density[[n]][[i]] = df
-			l[[i]] <-  transpose(data.table(colMeans(x=df[,1:3], na.rm = TRUE)))
-
-			alpha = tmp[sample(.N,500,replace=F)] %>% summarize_all(sum) %>% mutate(alphaW=dw/di,alphaS=ds/di,alpha=(ds+dw)/di) %>% select(alphaW,alphaS,alpha)
-
-			a[[i]] = alpha
-			a[[i]]$analysis = n
-			a[[i]]$method = "Simulations"
-			a[[i]]$B = bgs
-			a[[i]]$alphaWeak = aw
-			names(a[[i]]) = c('alphaW','alphaS','alpha','analysis',"method","B","alphaWeak")
-		}
+		df = fread(paste0(path,"/summStat/",model,"/",n,"/",n,"_posterior_1.tsv.gz"))
+		df$alphaWeak= alphaWeak
+		df$B = bgs
+		df$analysis = n
+		names(df) = c("Posterior alpha[w]","Posterior alpha[s]","Posterior alpha","alphaWeak","B","analysis")
+		tmp = suppressWarnings(melt(df))
 		
-		alphas[[n]] = rbindlist(a)
-		# alphas[[n]] = tmp
-		density[[n]] = rbindlist(density[[n]])
-		density[[n]]$B = bgs
-		density[[n]]$alphaWeak = aw
-		names(density[[n]]) <- c('alphaW','alphaS','alpha','analysis','B','alphaWeak')
+		density[[n]] = tmp
+		div = fread(paste0(path,"/simulations/",model,"/ne",ne,"/",n,"/div.tsv"))
 
-		tmp = rbindlist(l)
-		tmp$analysis = n
-		tmp$method = "ABC"
-		tmp$B = bgs
-		tmp$alphaWeak = aw
-		names(tmp) <- c('alphaW','alphaS','alpha','analysis',"method","B","alphaWeak")
+		aw = div$dw/div$di
+		as = div$ds/div$di
+		a = aw + as
+		
+		tmpSegment = data.table(x=c(aw,as,a),xend=c(aw,as,a),y=rep(0,3),yend=rep(Inf,3),c=c("#30504f", "#e2bd9a", "#ab2710"),g=c("True alpha[w]","True alpha[s]","True alpha"))
+		tmpSegment$alphaWeak = alphaWeak
+		tmpSegment$B = bgs
+		tmpSegment$analysis = n
+		segment[[n]] = tmpSegment
 
-		out[[n]] = tmp
+		p = ggplot(tmp) + 
+			geom_density(aes(x=value,fill=variable),alpha=0.75) + 
+			scale_fill_manual(values = paletteSanMiguel,labels=c(expression(paste("Posterior ",alpha[w])), expression(paste("Posterior ",alpha[s])),expression(paste("Posterior ",alpha)))) +
+			geom_segment(data=tmpSegment,aes(x=x,xend=xend,y=y,yend=yend,colour=g),size=1, linetype=5) +
+			scale_color_manual("True values",values=c("True alpha[w]"=paletteSanMiguel[1],"True alpha[s]"=paletteSanMiguel[2],"True alpha"=paletteSanMiguel[3]),labels=c(expression(paste("True ",alpha[w])), expression(paste("True ",alpha[s])),expression(paste("True ",alpha)))) + theme_bw() + labs(fill = "Posterior distributions",title=n,y="Posterior",x=expression(alpha))
+		# ggsave(p,filename=paste0("/home/jmurga/mkt/202004/results/abc/",model,"/",n,".svg"),dpi=300)
 	}
 
-	alphas = rbindlist(alphas)
-	out = rbindlist(out)
+	dataPlot = rbindlist(density)	
+	segment = rbindlist(segment)
 
-	dataPlot = rbind(alphas,out)
+	dataPlot$alphaWeak = factor(dataPlot$alphaWeak, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))
+	segment$alphaWeak = factor(segment$alphaWeak, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))
+	dataPlot$B = factor(dataPlot$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))
+	segment$B = factor(segment$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))
 
-	dataMelt = melt(dataPlot,id.vars=c("analysis","method","B","alphaWeak"))
-	dataMelt$analysis = factor(dataMelt$analysis,levels=analysis)
+	# segment$B = factor(segment$B, labels = c("B:0.8","B:0.999"))
+	# dataPlot$B = factor(dataPlot$B, labels = c("B:0.999"))
 
+	p2 = ggplot(dataPlot) + 
+		geom_density(aes(x=value,fill=variable),alpha=0.75) + 
+		scale_fill_manual(values = paletteSanMiguel,labels=c(expression(paste("Posterior ",alpha[w])), expression(paste("Posterior ",alpha[s])),expression(paste("Posterior ",alpha)))) +
+		geom_segment(data=segment,aes(x=x,xend=xend,y=y,yend=yend,colour=g),size=1, linetype=5) +
+		scale_color_manual("True values",values=c("True alpha[w]"=paletteSanMiguel[1],"True alpha[s]"=paletteSanMiguel[2],"True alpha"=paletteSanMiguel[3]),labels=c(expression(paste("True ",alpha[w])), expression(paste("True ",alpha[s])),expression(paste("True ",alpha)))) + 
+		facet_grid(~analysis) + theme_bw() + facet_grid(B~alphaWeak,labeller=label_parsed) + labs(fill = "Posterior distributions")
 
-	# dataPlot %>% group_by(method,analysis) %>% summarise(	output = list()alphaW = quantile(alphaW, c(0.25,0.75)), q = c(0.25, 0.75),alphaS = quantile(alphaS, c(0.25,0.75)), q = c(0.25, 0.75))
+	# Tables
+	dataPlot$value = round(dataPlot$value,3)
+	segment$x = round(segment$x,3)
+	d1 = dataPlot %>% group_by(analysis,variable,alphaWeak,B) %>% summarize(q=paste0(round(mean(value),3)," [",quantile(value,c(0.1)),"-",quantile(value,0.9),"]"))
+	d2 = reshape2::dcast(d1,analysis~variable)
+	d3 = dcast(segment,analysis~g,value.var="x")
+	d4 = merge(d2,d3,by='analysis') 
+	d4 = d4[,c("analysis","True alpha[w]","Posterior alpha[w]","True alpha[s]","Posterior alpha[s]","True alpha","Posterior alpha")]
 
-	# out = c(dataPlot,p)
-	# return(dataPlot)
+	tmp = do.call(rbind,strsplit(d4$analysis,"_"))[,3:4]
+	d4$alphaWeak = tmp[,1]
+	d4$B = tmp[,2]
+	d4 = d4 %>% arrange(B,alphaWeak)
 
-	# ggsave(p,file="/home/jmurga/noDemog_ABC.svg")
-
-	d = melt(rbindlist(density))
-	d$analysis = factor(d$analysis,levels=analysis)
-	# d$analysis = factor(d$analysis,levels=analysis)
-
-	output[['out']] = dataMelt
-	output[['density']] = d
-
-	return(output)
+	# ggsave(p2,filename=paste0("/home/jmurga/mkt/202004/results/abc/",model,"/noDemog.svg"),dpi=300)
+	out[['plot']] = p2
+	out[['table']] = d4
+	return(out)
 }
 
 plotSimulatedAlphas = function(f,title,output="/home/jmurga/mkt/202004/results/simulations/alphasSimulations/"){
@@ -113,25 +108,44 @@ plotSimulatedAlphas = function(f,title,output="/home/jmurga/mkt/202004/results/s
 
 }
 
-r = plotPosterior(analysis)
+# dfSegment = data.table(x=c(aw,as,a),xend=c(aw,as,a),y=rep(0,3),yend=rep(Inf,3))
 
-df=r$out
+# ggplot(d) + geom_density(aes(x=value,fill=variable,colour=variable),alpha=0.75) + fillSanMiguel() + colourSanMiguel() + geom_segment(data=dfSegment,aes(x=x,xend=xend,y=y,yend=yend),size=1,colour=dfSegment$c,linetype=2)            
 
-df$alphaWeak = factor(df$alphaWeak, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))	
-df$B = factor(df$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))
-p = ggplot(df,aes(x=variable,y=value,fill=method)) + geom_boxplot() + scale_fill_manual(values=c("#ab2710","#e2bd9a")) + facet_grid(~analysis)+ theme_bw() + facet_grid(B~alphaWeak,labeller=label_parsed) +scale_x_discrete(labels = c(expression(alpha[w]),expression(alpha[s]),expression(alpha)))
+r = plotPosterior(analysis=analysis,model="noDemog",pattern=NULL,nsample=10,software='R',ne=500)
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/noDemogABCRa.jpg",dpi=300)
 
-ggsave(p,filename="/home/jmurga/tennesenABC.svg")
+r = plotPosterior(analysis=analysis,model="noDemog",pattern="postR",nsample=10,software='ABCtoolbox',ne=500)
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/noDemogABCRb.jpg",dpi=300)
+ggsave(r$density,filename="/home/jmurga/abcplots/noDemogABCRb_density.jpg",dpi=300)
 
-ggsave(p,filename="/home/jmurga/mkt/202004/results/abc/boxplots/noDemogABC.svg")
-ggsave(p,filename="/home/jmurga/mkt/202004/results/abc/boxplots/noDemogABC.jpg",dpi=600)
-fwrite(df,"/home/jmurga/mkt/202004/results/abc/boxplots/noDemogABC.tsv")
+r = plotPosterior(analysis=analysis,model="noDemog",pattern="Best",nsample=10,software='ABCtoolbox',ne=500)
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/noDemogABCtoolbox.jpg",dpi=300)
+ggsave(r$density,filename="/home/jmurga/abcplots/noDemogABCtoolbox_density.jpg",dpi=300)
 
-fwrite(r$density,"/home/jmurga/mkt/202004/results/abc/boxplots/noDemogDensity.tsv")
+#############################
+r = plotPosterior(analysis=analysis,model="rescaled",pattern=NULL,nsample=50,software='R')
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/rescaledABCRa.svg")
+
+r = plotPosterior(analysis=analysis,model="rescaled",pattern="postR",nsample=50,software='ABCtoolbox')
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/rescaledABCRb.svg")
+ggsave(r$density,filename="/home/jmurga/abcplots/rescaledABCRb_density.svg")
+
+r = plotPosterior(analysis=analysis,model="rescaled",pattern="Best",nsample=50,software='ABCtoolbox')
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/rescaledABCtoolbox.svg")
+ggsave(r$density,filename="/home/jmurga/abcplots/rescaledABCtoolbox_density.svg")
+#############################
 
 
-r$density$alphaWeak = factor(r$density$alphaWeak, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))	
-r$density$B = factor(r$density$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))
-pD <- ggplot(r$density,aes(x=value,fill=variable)) + geom_density() + scale_fill_manual(values=c("#30504f","#e2bd9a","#ab2710")) + facet_grid(~analysis)+ theme_bw() + facet_grid(B~alphaWeak,labeller=label_parsed) +scale_x_discrete(labels = c(expression(alpha[w]),expression(alpha[s]),expression(alpha)));pD
+analysis = c("tennesen_0.4_0.3_0.2","tennesen_0.4_0.3_0.4","tennesen_0.4_0.1_0.8","tennesen_0.4_0.2_0.8","tennesen_0.4_0.3_0.8","tennesen_0.4_0.1_0.999","tennesen_0.4_0.2_0.999","tennesen_0.4_0.3_0.999")
 
-# ggsave(pD,filename="/home/jmurga/noDemog_density.svg")
+r = plotPosterior(analysis=analysis,model="tennesen",pattern=NULL,nsample=50,software='R')
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/tennesenABCRa.jpg",dpi=300)
+
+r = plotPosterior(analysis=analysis,model="tennesen",pattern="postR",nsample=50,software='ABCtoolbox')
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/tennesenABCRb.jpg",dpi=300)
+ggsave(r$density,filename="/home/jmurga/abcplots/tennesenABCRb_density.jpg",dpi=300)
+
+r = plotPosterior(analysis=analysis,model="tennesen",pattern="Best",nsample=50,software='ABCtoolbox')
+ggsave(r$boxplot,filename="/home/jmurga/abcplots/tennesenABCtoolbox.jpg",dpi=300)
+ggsave(r$density,filename="/home/jmurga/abcplots/tennesenABCtoolbox_density.jpg",dpi=300)
