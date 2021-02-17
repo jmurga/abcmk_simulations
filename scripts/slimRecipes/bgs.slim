@@ -43,7 +43,7 @@ initialize() {
 	//initializeMutationType("m2", 0.5, "g", -457/(2*N), 0.184); // non-coding deleterious
 
 	initializeMutationType("m1", 0.5, "f", -457/(2*N)); // non-coding deleterious
-    initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
+	initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
 	initializeMutationType("m3", 0.5, "g", -457/(2*N), 0.184); // deleterious
 	initializeMutationType("m4", 0.5, "f", sS/(2*N)); // strong beneficial
 	initializeMutationType("m5", 0.5, "f", wS/(2*N)); // weakly beneficial
@@ -119,6 +119,10 @@ initialize() {
 
    	// Get substitution info
 	subs = sim.substitutions;
+	catn(size(subs));
+	subs = subs[subs.fixationGeneration > (N*34)];
+	catn(size(subs));
+
 	m1Subs = subs[subs.mutationType == m1];
 	// Coding locus
 	m2Subs = subs[subs.mutationType == m2];
@@ -162,12 +166,8 @@ initialize() {
 	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
 	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
-	catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
+	//catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
 	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
-
-	// p1.outputVCFSample(20,filePath=fullPath + '/vcf/bgs_N_20_' + fileName + '.vcf'); 
-	// p1.outputVCFSample(100,filePath=fullPath + '/vcf/bgs_N_100_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
-	// p1.outputVCFSample(N,filePath=fullPath + '/vcf/bgs_N_all_' + fileName + '.vcf'); // AFR ancestry phase 3 sample of size 661
 
 }
 

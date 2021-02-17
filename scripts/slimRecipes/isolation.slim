@@ -146,6 +146,9 @@ initialize() {
 
    	// Get substitution info
 	subs = sim.substitutions;
+	/*catn(size(subs));
+	subs = subs[subs.fixationGeneration < (N*34)];
+	catn(size(subs));*/
 	m1Subs = subs[subs.mutationType == m1];
 	// Coding locus
 	m2Subs = subs[subs.mutationType == m2];

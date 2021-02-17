@@ -3,6 +3,8 @@ import numpy as np
 from scipy import optimize
 from scipy import stats
 import pandas as pd 
+from fisher import pvalue
+
 # DAF SHOULD BE A NUMPY ARRAY CONTAINING FREQ, PI AND P0 IN THAT ORDER
 # DIV SHOULD BE A NUMPY ARRAY CONTAINING DI, D0, MI, M0
 # CUMULATIVESFS. DESCRIBED AT HTTPS://STATIC-CONTENT.SPRINGER.COM/ESM/ART%3A10.1038%2FS41559-019-0890-6/MEDIAOBJECTS/41559_2019_890_MOESM1_ESM.PDF USING ALL THE INFORMATION ABOVE THE FREQUENCY. THE FIRST CATEGORY AT SFS INCLUDE PI
@@ -93,9 +95,9 @@ def cumulativeSfs(x):
 
 	return out
 
-# @njit
 def reduceSfs(x,bins):
 
+    bins = (bins*2) -1 
     f = x[:,0]
     sfs = x[:,1:]
     
@@ -111,47 +113,154 @@ def reduceSfs(x,bins):
     out[:,0] = b
     return(out)
 
-def imputedMKT(daf, div, m, cutoff=0.15):
+def imputedMKT(daf, div, l,h=None):
+
     output = {}
 
-    pi = np.sum(daf[:,2])
-    p0 = np.sum(daf[:,1])
-    di = div[1]
-    d0 = div[2]
-    mi = div[3]
-    m0 = div[4]
-    
+    pi = np.sum(daf[:,1])
+    p0 = np.sum(daf[:,2])
+    di = div[0]
+    d0 = div[1]
+    # mi = m[0]
+    # m0 = m[1]
+    toFix = 0
+    deleterious = 0
+    piHigh = 0
+    p0High = 0
+    ### Estimating slightly deleterious with pi/p0 ratio
+    fltLow = (daf[:, 0] <= l)
+    piLow   = daf[fltLow][:,1].sum()
+    p0Low   = daf[fltLow][:,2].sum()
 
-    # divergence metrics
-    output['Ka']       = di / mi
-    output['Ks']       = d0 / m0
-    output['omega']    = output['Ka'] / output['Ks']
+    if (h is None):
+        fltInter = (daf[:, 0] >= l) & (daf[:, 0] <= 1)
+        piInter = daf[fltInter][:, 1].sum()
+        p0Inter = daf[fltInter][:, 2].sum()
+    else:
+        fltInter = (daf[:, 0] >= l) & (daf[:, 0] < h)
+        piInter = daf[fltInter][:, 1].sum()
+        p0Inter = daf[fltInter][:, 2].sum()
 
-    ### Estimating alpha with pi/p0 ratio
-    piMinus   = daf[daf[:,0] <= cutoff][:,1].sum()
-    piGreater = daf[daf[:,0] > cutoff][:,1].sum()
-    p0Minus   = daf[daf[:,0] <= cutoff][:,2].sum()
-    p0Greater = daf[daf[:,0] > cutoff][:,2].sum()
+        fltHigh = (daf[:, 0] >= h)
+        piHigh  = daf[fltHigh][:, 1].sum()
+        p0High  = daf[fltHigh][:, 2].sum()
 
-    ratioP0       = p0Minus / p0Greater
-    deleterious   = piMinus - ( )
-    piNeutral     = pi - deleterious
+        toFix = piHigh - (piInter*p0High/p0Inter)
+        if toFix < 0:
+            toFix = 0
+        # di = round(di + abs(toFix),3)
 
-    output['alpha'] = 1 - (((pi - deleterious) / P0) * (d0 / di))
+    ratioP0       = p0Low / p0Inter
+    deleterious   = piLow - (piInter * ratioP0)
+    piNeutral     = round(pi - deleterious - toFix,3)
 
-    ## Estimation of b: weakly deleterious
-    output['b'] = (deleterious / P0) * (m0 / mi)
+    output['alpha'] = 1 - (((pi - deleterious) / p0) * (d0 / di))
+    # output[0] = round(1 - ((piNeutral/p0) * (d0 / di)),3)
+
+
+    # ## Estimation of b: weakly deleterious
+    output['b'] = (deleterious / p0) * (m0 / mi)
 
     ## Estimation of f: neutral sites
-    output['f'] = (m0 * piNeutral) / (mi * P0)
+    output['f'] = (m0 * piNeutral) / (mi * p0)
 
     ## Estimation of d, strongly deleterious sites
     output['d'] = 1 - (output['f'] + output['b'])
 
     oddsratio, output['pvalue'] = stats.fisher_exact([[p0, d0], [pi - deleterious, di]])[1]
 
-    ## Omega A and Omega D
-    output['omegaA'] = output['omega'] * output['alpha']
-    output['omegaD'] = output['omega'] - output['omegaA']
+    # # divergence metrics
+    # output['Ka']       = di / mi
+    # output['Ks']       = d0 / m0
+    # output['omega']    = output['Ka'] / output['Ks']
 
+
+    ## Omega A and Omega D
+    # output['omegaA'] = output['omega'] * output['alpha']
+    # output['omegaD'] = output['omega'] - output['omegaA']
+    # r1 = round(piLow/p0Low,3)
+    # r2 = round(piInter/p0Inter,3)
+    # try:
+    #     r3 = round(piHigh/p0High,3)
+    # except:
+    #     r3 = np.nan
+    # return output, np.array([pi, piNeutral, p0, r1,r2,r3,di, d0])
     return output
+
+def makeSfs_v2(data, cum=False):
+    div = {'mi': data.mi.sum(),
+           'Di': data.di.sum(),
+           'm0': data.m0.sum(),
+           'D0': data.d0.sum()}
+
+    daf = {'daf': np.arange(0.025, 1.0, 0.025),
+           'Pi': np.array(tuple(map(sum, zip(*tuple([tuple(map(int, daf.split(';'))) for daf in data.daf0f]))))),
+           'P0': np.array(tuple(map(sum, zip(*tuple([tuple(map(int, daf.split(';'))) for daf in data.daf4f])))))}
+
+    if cum:
+        daf['Pi'] = np.cumsum(daf['Pi'][::-1])[::-1]
+        daf['P0'] = np.cumsum(daf['P0'][::-1])[::-1]
+
+    return pd.DataFrame(daf, index=range(39)), pd.DataFrame(div, index=[0])
+
+def FWW(daf, div, cutoff=0.15):
+    res = {}
+
+    P0 = daf['P0'].sum()
+    Pi = daf['Pi'].sum()
+    D0 = int(div['D0'])
+    Di = int(div['Di'])
+    m0 = int(div['m0'])
+    mi = int(div['mi'])
+
+    ### Estimating alpha with Pi/P0 ratio
+    PiGreater = daf[daf['daf'] > cutoff]['Pi'].sum()
+    P0Greater = daf[daf['daf'] > cutoff]['P0'].sum()
+
+    res['alpha_fww'] = 1 - ((PiGreater / P0) * (D0 / Di))
+    res['pvalue_fww'] = stats.fisher_exact([[P0Greater, D0], [PiGreater, Di]])[1] 
+
+    return res
+
+def iMK(daf, div, cutoff=0.15):
+    res = {}
+
+    P0 = daf['P0'].sum()
+    Pi = daf['Pi'].sum()
+    D0 = int(div['D0'])
+    Di = int(div['Di'])
+    m0 = int(div['m0'])
+    mi = int(div['mi'])
+
+    ### Estimating alpha with Pi/P0 ratio
+    PiMinus   = daf[daf['daf'] <= cutoff]['Pi'].sum()
+    PiGreater = daf[daf['daf'] > cutoff]['Pi'].sum()
+    P0Minus   = daf[daf['daf'] <= cutoff]['P0'].sum()
+    P0Greater = daf[daf['daf'] > cutoff]['P0'].sum()
+
+    ratioP0     = P0Minus / P0Greater
+    deleterious = PiMinus - (PiGreater * ratioP0)
+    PiNeutral   = int(np.round(Pi - deleterious))
+
+    if deleterious < 0:
+        res['alpha_imputed'] = np.nan
+        res['neg_b'] = np.nan
+        res['neg_f'] = np.nan
+        res['neg_d'] = np.nan
+        res['pvalue_imputed'] = np.nan
+        
+    else:
+        res['alpha_imputed'] = 1 - (((Pi - deleterious) / P0) * (D0 / Di))
+
+        ## Estimation of b: weakly deleterious
+        res['neg_b'] = (deleterious / P0) * (m0 / mi)
+
+        ## Estimation of f: neutral sites
+        res['neg_f'] = (m0 * PiNeutral) / (mi * P0)
+
+        ## Estimation of d, strongly deleterious sites
+        res['neg_d'] = 1 - (res['neg_f'] + res['neg_b'])
+
+        res['pvalue_imputed'] = stats.fisher_exact([[P0, D0], [PiNeutral, Di]])[1] 
+
+    return res
