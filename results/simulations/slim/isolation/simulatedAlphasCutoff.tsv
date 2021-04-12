@@ -1,0 +1,13 @@
+trueAlpha	asymp_nopos	asymp	analyticalEstimation	path	analysis
+0.209	0.158	0.119	0.257	isolation_0.4_0.1_0.2	isolation
+0.191	0.185	0.112	0.231	isolation_0.4_0.2_0.2	isolation
+0.176	0.169	0.052	0.203	isolation_0.4_0.3_0.2	isolation
+0.251	0.218		0.313	isolation_0.4_0.1_0.4	isolation
+0.266	0.262	0.165	0.295	isolation_0.4_0.2_0.4	isolation
+0.251	0.242		0.277	isolation_0.4_0.3_0.4	isolation
+0.36	0.329	0.271	0.379	isolation_0.4_0.1_0.8	isolation
+0.351	0.338		0.374	isolation_0.4_0.2_0.8	isolation
+0.342	0.314		0.37	isolation_0.4_0.3_0.8	isolation
+0.391	0.344	0.284	0.401	isolation_0.4_0.1_0.999	isolation
+0.379	0.35		0.402	isolation_0.4_0.2_0.999	isolation
+0.364	0.357		0.404	isolation_0.4_0.3_0.999	isolation

@@ -361,27 +361,40 @@ plotPosteriorDensity = function(path="/home/jmurga/mkt/202004/rawData/summStat/n
 	return(out)
 }
 
-plotSimulatedAlphas = function(f,title,output="/home/jmurga/mkt/202004/results/simulations/alphasSimulations/"){
+plotSimulatedAlphas = function(df,trues,title,output){
 
-	df = fread(f)
-	df$alphaW = factor(df$alphaW, labels = c(
-	"alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))	
-	df$B = factor(df$B, labels = c(
-	"B:0.2","B:0.4","B:0.8","B:0.999"))
+	trues = as.data.table(trues[,c('trueAlpha','path')])
+	tmp  = do.call(rbind,strsplit(trues$path,"_"))
+	trues$B = tmp[,4]
+	trues$alphaW = tmp[,3]
+	if(length(unique(df$alphaW)) > 1){
+	    df$alphaW = factor(df$alphaW, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))
+	    trues$alphaW = factor(trues$alphaW, labels = c("alpha[w]:0.1","alpha[w]:0.2","alpha[w]:0.3"))
+	}else{
+	    df$alphaW = factor(df$alphaW, labels = c("alpha[w]:0.1"))
+	    trues$alphaW = factor(trues$alphaW, labels = c("alpha[w]:0.1"))	    
+	}	
+	if(length(unique(df$B)) > 1){
+	    df$B = factor(df$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))
+	    trues$B = factor(trues$B, labels = c("B:0.2","B:0.4","B:0.8","B:0.999"))    
+	}else{
+	    df$B = factor(df$B, labels = c("B:0.999"))
+	    trues$B = factor(trues$B, labels = c("B:0.999"))
+	}
 
 	p = ggplot(df, aes(x=f,y=alphas,color=sfs)) + 
-		geom_line() + 
-		facet_grid(B~alphaW,labeller=label_parsed) + 
-		ylim(-0.5,0.5) + 
-		scale_color_manual(values=c('black','#ab2710'),name = "SFS", labels = c("All alleles","Neutral + deleterious")) + 
-		theme_bw() + 
-		ylab(expression(alpha)) + 
-		xlab('Derived Allele Count') + 
-		theme(legend.position="bottom",legend.text=element_text(size=14),plot.title=element_text(hjust=0.5,face='bold')) +
-		ggtitle(title);p
+	    geom_line() + 
+	    geom_hline(data=trues,aes(yintercept=trueAlpha),color = 'gray',linetype = "dotted", size = 1) +
+	    facet_grid(B~alphaW,labeller=label_parsed) + 
+	    ylim(-0.5,0.5) + 
+	    scale_color_manual(values=c('black','#ab2710'),name = "SFS", labels = c("All alleles","Neutral + deleterious")) + 
+	    theme_bw() + 
+	    ylab(expression(alpha)) + 
+	    xlab('Derived Allele Count') + 
+	    theme(legend.position="bottom",legend.text=element_text(size=14),plot.title=element_text(hjust=0.5,face='bold'))
 
-		ggsave(p,filename=paste0("/home/jmurga/mkt/202004/results/simulations/alphasSimulations/",output,".svg"))
-		ggsave(p,filename=paste0("/home/jmurga/mkt/202004/results/simulations/alphasSimulations/",output,".jpg"),dpi=600)
+	ggsave(p,filename=output,dpi=600)
+	return(p)
 }
 
 plotMethodsABC = function(){

@@ -15,7 +15,6 @@ import glob
 from tqdm import tqdm
 import string
 
-
 def runSlim(recipe,simTable,pSize,codingLength,strongStrength,weaklyStrength,bins,replicas,threads,slimPath="/home/jmurga/.conda/envs/abcmk/bin/slim",parallelPath="/home/jmurga/.conda/envs/abcmk/bin/parallel"):
 
 	bgs = []
@@ -30,66 +29,23 @@ def runSlim(recipe,simTable,pSize,codingLength,strongStrength,weaklyStrength,bin
 
 	process = subprocess.run(tmp, shell=True,check=True,executable='/bin/bash')
 
-def parsePolDiv(path,N,nthreads=8,sample=None):
-	"""
-	slr, tupple array with daf and div data by element in list
-	"""
-	N = (N*2)-1
-	
-	dafFiles = np.sort(glob.glob(path + "/daf/*.tsv.gz"))
-	divFiles = np.sort(glob.glob(path + "/div/div*.tsv.gz"))
-	alFiles  = np.sort(glob.glob(path + "/div/al*.tsv.gz"))
-
-	if sample is not None:
-		tmp = np.arange(0,len(dafFiles))
-		idx   = np.sort(np.random.choice(tmp,sample,replace=False))
-		dafFiles = dafFiles[idx]
-		divFiles = divFiles[idx]
-		alFiles  = alFiles[idx]
-
-		iteration= len(dafFiles)
-	else:
-		iteration = len(dafFiles)
-	
-	pool = Pool(processes=nthreads)
-	lSfs, lDiv = zip(*pool.starmap(openFiles,list(zip(dafFiles,divFiles))))
-	pool.terminate()
-
-	sfs = np.sum(lSfs, axis=0)
-	f = np.reshape(np.arange(1,N+1)/N,(N,1))
-	sfs = pd.DataFrame(np.hstack((f, sfs)))
-	# sCumu = pd.DataFrame(cumulativeSfs(sfs))
-	d = pd.DataFrame(np.sum(lDiv, axis=0)).T
-
-	
-	sfs.columns = ['f','pi','p0','pw','pi_nopos']
-	d.columns   = ['di','d0','dw','ds']
-
-	if sample is not None:
-		sfs.to_csv(path + "/sfs" + str(sample) + ".tsv",header=True,index=False,sep="\t")
-		d.to_csv(path + "/div" + str(sample) + ".tsv",header=True,index=False,sep="\t")
-		# allDivs.to_pandas().to_csv(path + "/divTable" + str(sample) + ".tsv",header=True,index=False,sep="\t")
-		# alphas.to_pandas().to_csv(path + "/alphas"+ str(sample) + ".tsv",header=True,index=False,sep="\t")
-	else:
-		sfs.to_csv(path + "/sfs.tsv",header=True,index=False,sep="\t")
-		d.to_csv(path + "/div.tsv",header=True,index=False,sep="\t")
-		# allDivs.to_pandas().to_csv(path + "/divTable.tsv",header=True,index=False,sep="\t")
-		# alphas.to_pandas().to_csv(path + "/alphas.tsv",header=True,index=False,sep="\t")
-	
 def saveSimulatedAlphas(table,l=0,h=1,bins=None,sample=None,cumulative=True):
 	out = [];al = [];
 	for index,row in table.iterrows():
 		# print(row.path)
+		r = np.random.choice(np.arange(1,100),1)[0]
 
 		if sample is not None:
+
 			sfs = pd.read_csv(row.path + "/sfs"+str(sample)+".tsv",header=0,sep="\t")
 			div = pd.read_csv(row.path + "/div"+str(sample)+".tsv",header=0,sep="\t")
 			# alphas = pd.read_csv(row.path + "/alphas"+str(sample)+".tsv",header=0,sep="\t")
 			alpha = (div.ds+div.dw)/div.di
 		
 		else:
-			sfs = pd.read_csv(row.path + "/sfs.tsv",header=0,sep="\t")
-			div = pd.read_csv(row.path + "/div.tsv",header=0,sep="\t")
+			
+			sfs = pd.read_csv(row.path + "/sfs"+ str(r)+".tsv",header=0,sep="\t")
+			div = pd.read_csv(row.path + "/div"+ str(r)+".tsv",header=0,sep="\t")
 			# alphas = pd.read_csv(row.path + "/alphas.tsv",header=0,sep="\t")
 			alpha = (div.ds+div.dw)/div.di
 		
@@ -111,12 +67,12 @@ def saveSimulatedAlphas(table,l=0,h=1,bins=None,sample=None,cumulative=True):
 			else:
 				cSfs = sfs.to_numpy()
 				
-			cSfs = cSfs[(cSfs[:,0] >= l) & (cSfs[:,0] <=h)]
+			# cSfs = cSfs[(cSfs[:,0] >= l) & (cSfs[:,0] <=h)]
 
-			asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),0,1)
+			asymp1 = amkt(cSfs[:,[0,4,2]],div.to_numpy().flatten(),l,h)
 
-			asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),0,1)	
-			f = np.arange(1,asymp1[1].shape[0]+1)/asymp1[1].shape[0]
+			asymp2 = amkt(cSfs[:,[0,1,2]],div.to_numpy().flatten(),l,h)	
+			f = np.arange(1,asymp1[1].shape[0]+1)/cSfs.shape[0]
 		
 		tmp = pd.DataFrame({'trueAlpha':alpha,'asymp_nopos':asymp1[0]['alpha'],'asymp':asymp2[0]['alpha'],'analyticalEstimation':row.estimation,'path':row.path.split('/')[-1],'analysis':row.analysis})
 		
@@ -219,7 +175,7 @@ def abcOutputs(model,simulations):
 
 	return(alphaToPlot,densityToPlot)
 
-def parseBootstrapPolDiv(path,N,output,sample=0.01,replicas=100,nthreads=8,dofe=False,bins=None):
+def parseBootstrapPolDiv(path,N,sample=0.01,replicas=100,nthreads=8,dofe=False,bins=None):
 	"""
 	slr, tupple array with daf and div data by element in list
 	"""
@@ -229,9 +185,32 @@ def parseBootstrapPolDiv(path,N,output,sample=0.01,replicas=100,nthreads=8,dofe=
 	lSfs,ldiv = zip(*pool.starmap(openFiles,list(zip(dafFiles,divFiles))))
 	pool.terminate()
 
-	idxAll = np.arange(0,len(dafFiles))
+	# for i in range(1,divFiles.shape[0]):
+	# 	print(i)
+	# 	a,b = openFiles(dafFiles[i],divFiles[i])
+	idxAll = np.arange(0,len(dafFiles)-1)
 	bn = (N*2) - 1
 	rsample = int(sample * len(dafFiles))
+
+
+	sfs = np.sum(lSfs,axis=0)[:,1:]
+	f = np.reshape(np.arange(1,bn+1)/bn,(bn,1))
+	sfs = np.hstack((f,sfs))
+	# sCumu = cumulativeSfs(sfs)
+	d = np.sum(ldiv,axis=0)
+
+	fName = path + path.split("/")[-1] 
+	sfs = pd.DataFrame(np.round(sfs,5),columns=['f','pi','p0','pw'])
+	sfs['pi_nopos'] = sfs['pi'] - sfs['pw']
+	d = pd.DataFrame(d).T
+	d.columns=['di','d0','dw','ds']
+
+	if bins is not None:
+		sfs.to_csv(fName + "/sfs.tsv", header=True, index=False, sep="\t")
+		d.to_csv(fName + "/div.tsv", header=True, index=False, sep="\t")
+	else:
+		sfs.to_csv(path + "/sfs.tsv", header=True, index=False, sep="\t")
+		d.to_csv(path + "/div.tsv", header=True, index=False, sep="\t")
 
 	for r in tqdm(range(1, replicas+1)):
 		idx   = np.sort(np.random.choice(idxAll,rsample,replace=True))
@@ -246,23 +225,22 @@ def parseBootstrapPolDiv(path,N,output,sample=0.01,replicas=100,nthreads=8,dofe=
 		d = np.sum(tmpDiv,axis=0)
 		
 		if dofe is True:
-			os.makedirs(output + path.split("/")[-1], exist_ok=True) 
+			os.makedirs(path + path.split("/")[-1], exist_ok=True) 
 			if bins is not None:
 				header = pd.DataFrame([1,1,bins*2]).T
-				fName = output + "/" + path.split("/")[-1] + "/" + path.split("/")[-1] + "_polydfe_"+ str(r) + "_"  + str(bins) + ".tsv"
+				fName = path + "/" + path.split("/")[-1] + "/" + path.split("/")[-1] + "_polydfe_"+ str(r) + "_"  + str(bins) + ".tsv"
 				sfs = reduceSfs(sfs,bins)
 			else:
 				header = pd.DataFrame([1,1,N*2]).T
-				fName = output + "/" + path.split("/")[-1] + "/" + path.split("/")[-1] + "_polydfe_"+ str(r) + ".tsv"
+				fName = path + "/" + path.split("/")[-1] + "/" + path.split("/")[-1] + "_polydfe_"+ str(r) + ".tsv"
 
 			neutral = pd.DataFrame(np.hstack([sfs[:,2],m*0.25,d[1],m*0.25])).T
 			selected = pd.DataFrame(np.hstack([sfs[:,1],m*0.75,d[0],m*0.75])).T
 			df = pd.concat([neutral,selected])
 			header.to_csv(fName,sep=' ',header=None,index=False)
-			df.to_csv(fName,sep=' ',header=None,index=False,mode='a')
-			
+			df.to_csv(fName,sep=' ',header=None,index=False,mode='a')			
 		else:
-			fName = output + path.split("/")[-1] 
+			fName = path + path.split("/")[-1] 
 			sfs = pd.DataFrame(np.round(sfs,5),columns=['f','pi','p0','pw'])
 			sfs['pi_nopos'] = sfs['pi'] - sfs['pw']
 			d = pd.DataFrame(d).T
@@ -351,21 +329,25 @@ def compareAlphas(simulations,nn,PATH="/home/jmurga/mkt/201902/rawData/simulatio
 def sfsToDofe(path,bins,output="/home/jmurga/mkt/202004/rawData/dofe/grapes/"):
 
 
-	sfs= pd.read_csv(path + "/sfs.tsv",delimiter='\t').to_numpy() 
-	div= pd.read_csv(path + "/div.tsv",delimiter='\t').to_numpy().flatten() 
+	sfs= pd.read_csv(path + "/sfs.tsv",delimiter='\t').to_numpy()
+	div= pd.read_csv(path + "/div.tsv",delimiter='\t').to_numpy().flatten().astype(int)
 
 	if ((bins*2)-1) != sfs.shape[0]:
 		sfs = reduceSfs(sfs,bins)
 		header = pd.DataFrame(["#unfolded"])
 		fName = output + path.split("/")[-1] + "_grapes_"+ str(bins) + ".tsv"
 	else:
-		header = pd.DataFrame(np.array([1,1,sfs.shape[0] + 1])).T
+		header = pd.DataFrame(["#unfolded"])
 		fName = output + path.split("/")[-1] + "_grapes.tsv"
 
-	data = pd.DataFrame(np.hstack(['all',bins*2,10**8*0.75,sfs[:,1],10**8*0.25,sfs[:,2],10**8*0.75,div[0],10**8*0.25,div[1]])).T                                                   
+	sfs = sfs.astype(int)
+	data = pd.DataFrame(np.hstack([path.split("/")[-1],bins*2,int(10**8*0.75),sfs[:,1],int(10**8*0.25),sfs[:,2],int(10**8*0.75),div[0],int(10**8*0.25),div[1]])).T
 
-	header.to_csv(fName,sep=' ',header=None,index=False)
-	data.to_csv(fName,sep=' ',header=None,index=False,mode='a')
+	f = open(fName,"w")
+	f.write(" \n")
+	f.close()
+	header.to_csv(fName,sep='\t',header=None,index=False)
+	data.to_csv(fName,sep='\t',header=None,index=False,mode='a')
 
 def openFiles(sfsFile,divFile):
 
@@ -373,3 +355,32 @@ def openFiles(sfsFile,divFile):
 	div = pd.read_csv(divFile,sep='\t').to_numpy().flatten()
 
 	return(sfs,div)
+
+def dofeToSfs(file,output):
+
+	# file = "primates_fruitflies.dofe"
+
+	f = open(file)
+	content = f.readlines()
+
+	content = np.array(content[2:])
+	content = content[content!='\n']
+	for s in tqdm(content):
+		tmp = s.split('\t')
+		header = tmp[0].lower()
+		samples = int(tmp[1])
+		data = np.array(tmp[2:])
+		pn = data[0:samples][1:].astype(float)
+		ps = data[samples:(samples*2)][1:].astype(float)
+
+		d = data[samples*2:][[1,3]].astype(float)
+
+		sfs = pd.DataFrame({'f':np.round(np.arange(1,samples)/samples,3),'pn':pn,'ps':ps})
+		divergence = pd.DataFrame({'dn':d[0],'ds':d[1]},index=[0])
+		os.makedirs(output + "/" + header ,exist_ok=True)    
+		sfs.to_csv(output + "/" + header + "/sfs_" + header + ".tsv",header=True,index=False,sep='\t')
+		divergence.to_csv(output + "/" + header + "/div_" + header  + ".tsv",header=True,index=False,sep='\t')
+
+		f = open(output + "/" + header + "/" + header  + ".dofe","w")
+		f.write('#unfolded\n'+s)
+		f.close()

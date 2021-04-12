@@ -6,21 +6,19 @@ initialize() {
 	//mu = Analytical.set_theta_f(adap)
 	
 	// rescale and not, check 
-	defineConstant("N", popSize);
-	defineConstant("S", sampleSize);
-	defineConstant("fileName", nF);
-	defineConstant("fullPath", p);
-	defineConstant("bn", (S*2)-1);
-	
+	/*defineConstant("S", );
+	defineConstant("nF", nF);
+	defineConstant("output", p);
+	*/
 	// Command line arguments
-	defineConstant("wS", weaklyStrength); // 2Nes
+	/*defineConstant("wS", weaklyStrength); // 2Nes
 	defineConstant("sS", strongStrength); // 2Nes
 	defineConstant("muBgs", bgsMutationRate); // 2Nes
-	
-	defineConstant("pBeneficialW", pposL);
+	*/
+	/*defineConstant("pBeneficialW", pposL);
 	defineConstant("pBeneficialS", pposH);
 	defineConstant('nc_length', asInteger(10^5));
-	defineConstant('ex_length', asInteger(codingLength));
+	*/
 
 
 	// Solve analytical to obtain the mutation rate in non-coding locus 
@@ -28,7 +26,9 @@ initialize() {
 	// adap = Analytical.parameters(N=1000,n=661,Lf=2*10^5,gam_neg=-457);
 	// Analytical.set_theta_f(adap)
 	//muBgs = 1.64e-6;
-
+	defineConstant("bn", (sampleSize*2)-1);
+	defineConstant('ex_length', asInteger(codingLength));
+	defineConstant('nc_length', asInteger(10^5));
 	rates = c (muBgs, 0.001/(4*N),muBgs); 
 	// mutation rate end positions
 	// 99999 100499 100999 201999
@@ -51,7 +51,7 @@ initialize() {
 	initializeMutationType("m5", 0.5, "f", wS/(2*N)); // weakly beneficial
     
 
-	initializeGenomicElementType("g1", c(m2,m3,m4,m5), c(0.25,0.75*(1-(pBeneficialS+pBeneficialW)),0.75*pBeneficialS,0.75*pBeneficialW)); // exon; relative proportion to get ~0.25 syn, ~0.75 non-syn
+	initializeGenomicElementType("g1", c(m2,m3,m4,m5), c(0.25,0.75*(1-(pposH+pposL)),0.75*pposH,0.75*pposL)); // exon; relative proportion to get ~0.25 syn, ~0.75 non-syn
 	initializeGenomicElementType("g3", c(m1), c(1)); // non-coding whith only deleterious mutations
 	g3.color="black";
 
@@ -76,7 +76,7 @@ initialize() {
 
 // Create the ancestral African population
 1 { 
-	sim.addSubpop("p1", N); 
+	sim.addSubpop("p1", 731); 
 }
 
 // Expand the African population to 14474
@@ -85,38 +85,6 @@ initialize() {
 21408 { 
 	p1.setSubpopulationSize(1447); 
 }
-
-// // Split non-Africans from Africans and set up migration between them
-// // Thi1s occurs 51000 years (2040 generations) ago
-// 21796 {
-// 	sim.addSubpopSplit("p2", 1861, p1);
-// 	p1.setMigrationRates(c(p2), c(15e-4));
-// 	p2.setMigrationRates(c(p1), c(15e-4));
-// }
-
-// Second european bottleneck and population growth
-// This occurs 23000 years (920 generations) ago
-// 21908 {
-// 	p2.setSubpopulationSize(186);  // reduce European size
-// 	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
-// 	p1.setMigrationRates(c(p2), c(2.5e-4));
-// 	p2.setMigrationRates(c(p1), c(2.5e-4));
-// }
-
-// Set up exponential growth
-// Where N(0) is the base subpopulation size and t = gen - 57080:
-// N(Europe) should be int(round(N(0) * e^(0.0038*t)))
-// // 57080:57795 {
-// 21908:21979 {
-
-// 	// t = sim.generation - 57080;
-// 	t = sim.generation - 21908;
-// 	//exp rescaled from 0.00307
-// 	p2_size = round(103 * exp(0.0307 * t));
-// 	p2.setSubpopulationSize(asInteger(p2_size));
-
-// 	// catn(p2_size);
-// }
 
 // Second exponential growth
 // 57795:58000 {
@@ -140,12 +108,11 @@ initialize() {
 	
 	
 	// Sample individuals
-	sampledIndividuals = p1.sampleIndividuals(S).genomes;  
+	sampledIndividuals = p1.sampleIndividuals(sampleSize).genomes;  
 	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
 	//m1muts = sim.mutationsOfType(m1);
 	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
 
-	catn(sort(sampledIndividuals.mutationFrequenciesInGenomes()));
 
 	// Segregating sites within the sample. 
 	m = unique(sampledIndividuals.mutations);
@@ -176,7 +143,7 @@ initialize() {
 		pw = rep(0,bn);
 	}else{
 		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
-		pw  = sapply(0:((bn)-1), " sum((fw >= applyValue / (bn)) & (fw < (applyValue + 1) / (bn))); ");
+		pw  = sapply(0:((bn)), " sum((fw >= applyValue / (bn)) & (fw < (applyValue + 1) / (bn))); ");
 	}
 
 
@@ -189,45 +156,26 @@ initialize() {
 	m4Subs = subs[subs.mutationType == m4];
 	m5Subs = subs[subs.mutationType == m5];
 
-	trueAlpha = (m4Subs.size() + m5Subs.size()) / (m4Subs.size() + m5Subs.size() + m3Subs.size());
-	trueAlphaW =  (m5Subs.size()) / (m5Subs.size() + m4Subs.size() + m3Subs.size());
-	trueAlphaS = (m4Subs.size()) / (m5Subs.size() + m4Subs.size() + m3Subs.size());
-
 	di = m5Subs.size() + m4Subs.size() + m3Subs.size();
 	dw = m5Subs.size();
 	d0 = m2Subs.size();
 	ds = m4Subs.size();
 
-	if(isNAN(trueAlphaW)){
-		trueAlphaW = "NA";
-	}
-	if(isNAN(trueAlphaS)){
-		trueAlphaS = "NA";
-	}
-	if(isNAN(trueAlpha)){
-		trueAlpha = "NA";
-	}
 	
 	f = (1:(bn)) / (bn);
 	line = "daf\tpi\tp0\tpw";
-	writeFile( fullPath + "/daf/daf" + fileName +  ".tsv.gz", line, compress=T);
+	writeFile( output + "/daf/daf" + nF +  ".tsv.gz", line, compress=T);
 	//catn("daf\tpi\tp0\tpw");
 	for (i in 0:(bn-1)){
 		line = f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i];
-		writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
+		writeFile(output + "/daf/daf" + nF +  ".tsv.gz", line,append=T, compress=T);
 		//catn( f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
 	}
 
 	line  = "di\td0\tdw\tds";
-	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz",line, compress=T); 
+	writeFile(output + "/div/div" + nF +  ".tsv.gz",line, compress=T); 
 	line  = di + "\t" + d0 + "\t" + dw + "\t" + ds;
-	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz", line,append=T ,compress=T);
-
-	
-	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
-	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
-	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
-	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
+	writeFile(output + "/div/div" + nF +  ".tsv.gz", line,append=T ,compress=T);
 
 }
 

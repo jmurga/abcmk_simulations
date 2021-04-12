@@ -1505,25 +1505,6 @@ createInitLines = function(estimates, outputfile, startingID = 1,
 	cat('\n', file = initFile, append = TRUE)
 }
 
-
-function bootstrapData(sFile::Array{Float64,2},dFile::Array{Float64,2},replicas::Int64,outputFolder::String)
-	
-	sfs = Array(CSV.read(sFile,DataFrame))
-	divergence   = fill(Array(CSV.read(dFile,DataFrame)),replicas)
-
-	scumu = fill(cumulativeSfs(sfs[:,2:end]),replicas)
-
-	b(x) = PoissonRandom.pois_rand.(x)
-
-	bootstrap = b.(scumu)
-	outSfs = @. output * "sfs" * string(1:replicas) * ".tsv"
-	outDiv = @. output * "div" * string(1:replicas) * ".tsv"
-	for i=1:replicas
-		CSV.write(out,DataFrame(bootstrap[i]),header=false)
-		CSV.write(out,DataFrame(divergence[i]),header=false)
-	end
-end
-
 bootstrapData = function(inputfile, outputfile = NULL, rep = 1)
 {
 	# this only works for data that has just two fragments

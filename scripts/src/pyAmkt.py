@@ -1,4 +1,4 @@
-from numba import njit
+# from numba import njit
 import numpy as np
 from scipy import optimize
 from scipy import stats
@@ -10,69 +10,69 @@ from fisher import pvalue
 # CUMULATIVESFS. DESCRIBED AT HTTPS://STATIC-CONTENT.SPRINGER.COM/ESM/ART%3A10.1038%2FS41559-019-0890-6/MEDIAOBJECTS/41559_2019_890_MOESM1_ESM.PDF USING ALL THE INFORMATION ABOVE THE FREQUENCY. THE FIRST CATEGORY AT SFS INCLUDE PI
 
 def amkt(daf, div, xlow=0, xhigh=1):
-    output = {}
+	output = {}
 
-    dRatio = float(div[1] / div[0])
-    # Compute alpha values and trim
-    alpha = 1 - dRatio * (daf[:,1] / daf[:,2])
-    trim = ((daf[:,0] >= xlow) & (daf[:,0] <= xhigh))
+	dRatio = float(div[1] / div[0])
+	# Compute alpha values and trim
+	alpha = 1 - dRatio * (daf[:,1] / daf[:,2])
+	trim = ((daf[:,0] >= xlow) & (daf[:,0] <= xhigh))
 
-    # Two-step model fit:
-    # First bounded fit:
-    try:
-        popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim],bounds=([-1, -1, 1], [1, 1, 10]))
-        # print('fit initial')
-    except:
-        # print('could not fit initial')
-        popt = None
-        pcov = None
+	# Two-step model fit:
+	# First bounded fit:
+	try:
+		popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim],bounds=([-1, -1, 1], [1, 1, 10]))
+		# print('fit initial')
+	except:
+		# print('could not fit initial')
+		popt = None
+		pcov = None
 
 
-    # Second fit using initially guessed values or unbounded fit:
-    try:
-        popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt,method='lm')
-        # print('Fit: lm')
-    except:
-        try:
-            popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt,  method='trf')
-            # print('Fit: trf')
-        except:
-            try:
-                popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt, method='dogbox')
-                # print('Fit: dogbox')
-            except:
-                popt=None
+	# Second fit using initially guessed values or unbounded fit:
+	try:
+		popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt,method='lm')
+		# print('Fit: lm')
+	except:
+		try:
+			popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt,  method='trf')
+			# print('Fit: trf')
+		except:
+			try:
+				popt, pcov = optimize.curve_fit(exp_model, daf[:,0][trim], alpha[trim], p0=popt, method='dogbox')
+				# print('Fit: dogbox')
+			except:
+				popt=None
 
-    if popt is None:
-        output = {'a': np.nan,'b':np.nan,'c': np.nan,'alpha':np.nan,'ciLow':np.nan,'ciHigh':np.nan}
+	if popt is None:
+		output = {'a': np.nan,'b':np.nan,'c': np.nan,'alpha':np.nan,'ciLow':np.nan,'ciHigh':np.nan}
 
-    else:
-        output['a'] = popt[0]
-        output['b'] = popt[1]
-        output['c'] = popt[2]
+	else:
+		output['a'] = popt[0]
+		output['b'] = popt[1]
+		output['c'] = popt[2]
 
-        # alpha for predicted model
-        output['alpha'] = exp_model(1.0, output['a'], output['b'], output['c'])
-        
-        # Compute confidence intervals based on simulated data (MC-SOERP)
-        vcov = pd.concat([pd.DataFrame([0] * 4).transpose(),
-                          pd.concat([pd.DataFrame([0] * 4), pd.DataFrame(pcov)], axis=1, ignore_index=True)],
-                         axis=0, ignore_index=True)
-        vcov = vcov.iloc[0:4, :].values
+		# alpha for predicted model
+		output['alpha'] = exp_model(1.0, output['a'], output['b'], output['c'])
+		
+		# Compute confidence intervals based on simulated data (MC-SOERP)
+		vcov = pd.concat([pd.DataFrame([0] * 4).transpose(),
+						  pd.concat([pd.DataFrame([0] * 4), pd.DataFrame(pcov)], axis=1, ignore_index=True)],
+						 axis=0, ignore_index=True)
+		vcov = vcov.iloc[0:4, :].values
 
-        try:
-            simpars = np.random.multivariate_normal(mean=[1.0, output['a'], output['b'], output['c']], cov=vcov, size=10000, check_valid='raise')  # same as R implementation
-            output['ciLow'], output['ciHigh'] = np.quantile([exp_model(x[0], x[1], x[2], x[3]) for x in simpars], [0.025, 0.975])
-        except:
-            output['ciLow'], output['ciHigh']= np.nan, np.nan
+		try:
+			simpars = np.random.multivariate_normal(mean=[1.0, output['a'], output['b'], output['c']], cov=vcov, size=10000, check_valid='raise')  # same as R implementation
+			output['ciLow'], output['ciHigh'] = np.quantile([exp_model(x[0], x[1], x[2], x[3]) for x in simpars], [0.025, 0.975])
+		except:
+			output['ciLow'], output['ciHigh']= np.nan, np.nan
 
-    return output,alpha[trim]
+	return output,alpha[trim]
 
-@njit
+# @njit
 def exp_model(f_trimmed, a, b, c):
-    return a + b * np.exp(-c * f_trimmed)
+	return a + b * np.exp(-c * f_trimmed)
 
-@njit
+# @njit
 def cumulativeSfs(x):
 
 	f       = x[:,0]
@@ -97,170 +97,156 @@ def cumulativeSfs(x):
 
 def reduceSfs(x,bins):
 
-    bins = (bins*2) -1 
-    f = x[:,0]
-    sfs = x[:,1:]
-    
-    b = np.arange(0,1,1/bins)
-    inds = np.digitize(f,b,right=True)
-    out  = np.zeros((bins,x.shape[1]))
-    out[:,0]  = np.unique(inds)
-    
-    sfsGrouped = np.hstack([np.reshape(inds,(inds.shape[0],1)),sfs])
-    for i in np.unique(inds):
-        out[out[:,0]==i,1:] = np.sum(sfsGrouped[sfsGrouped[:,0] == i,1:],axis=0) 
-        
-    out[:,0] = b
-    return(out)
+	bins = (bins*2) -1 
+	f = x[:,0]
+	sfs = x[:,1:]
+	
+	b = np.arange(0,1,1/bins)
+	inds = np.digitize(f,b,right=True)
+	out  = np.zeros((bins,x.shape[1]))
+	out[:,0]  = np.unique(inds)
+	
+	sfsGrouped = np.hstack([np.reshape(inds,(inds.shape[0],1)),sfs])
+	for i in np.unique(inds):
+		out[out[:,0]==i,1:] = np.sum(sfsGrouped[sfsGrouped[:,0] == i,1:],axis=0) 
+		
+	out[:,0] = b
+	return(out)
 
-def imputedMKT(daf, div, l,h=None):
+def imputedMK(daf, divergence,l,h=None,m=None):
 
-    output = {}
+	output = {}
 
-    pi = np.sum(daf[:,1])
-    p0 = np.sum(daf[:,2])
-    di = div[0]
-    d0 = div[1]
-    # mi = m[0]
-    # m0 = m[1]
-    toFix = 0
-    deleterious = 0
-    piHigh = 0
-    p0High = 0
-    ### Estimating slightly deleterious with pi/p0 ratio
-    fltLow = (daf[:, 0] <= l)
-    piLow   = daf[fltLow][:,1].sum()
-    p0Low   = daf[fltLow][:,2].sum()
-
-    if (h is None):
-        fltInter = (daf[:, 0] >= l) & (daf[:, 0] <= 1)
-        piInter = daf[fltInter][:, 1].sum()
-        p0Inter = daf[fltInter][:, 2].sum()
-    else:
-        fltInter = (daf[:, 0] >= l) & (daf[:, 0] < h)
-        piInter = daf[fltInter][:, 1].sum()
-        p0Inter = daf[fltInter][:, 2].sum()
-
-        fltHigh = (daf[:, 0] >= h)
-        piHigh  = daf[fltHigh][:, 1].sum()
-        p0High  = daf[fltHigh][:, 2].sum()
-
-        toFix = piHigh - (piInter*p0High/p0Inter)
-        if toFix < 0:
-            toFix = 0
-        # di = round(di + abs(toFix),3)
-
-    ratioP0       = p0Low / p0Inter
-    deleterious   = piLow - (piInter * ratioP0)
-    piNeutral     = round(pi - deleterious - toFix,3)
-
-    output['alpha'] = 1 - (((pi - deleterious) / p0) * (d0 / di))
-    # output[0] = round(1 - ((piNeutral/p0) * (d0 / di)),3)
+	pi = np.sum(daf[:,1])
+	p0 = np.sum(daf[:,2])
+	di = divergence[0]
+	d0 = divergence[1]
 
 
-    # ## Estimation of b: weakly deleterious
-    output['b'] = (deleterious / p0) * (m0 / mi)
+	toFix = 0
+	deleterious = 0
+	piHigh = 0
+	p0High = 0
+	### Estimating slightly deleterious with pi/p0 ratio
+	fltLow = (daf[:, 0] <= l)
+	piLow   = daf[fltLow][:,1].sum()
+	p0Low   = daf[fltLow][:,2].sum()
 
-    ## Estimation of f: neutral sites
-    output['f'] = (m0 * piNeutral) / (mi * p0)
+	if (h is None):
+		fltInter = (daf[:, 0] >= l) & (daf[:, 0] <= 1)
+		piInter = daf[fltInter][:, 1].sum()
+		p0Inter = daf[fltInter][:, 2].sum()
+	else:
+		fltInter = (daf[:, 0] >= l) & (daf[:, 0] < h)
+		piInter = daf[fltInter][:, 1].sum()
+		p0Inter = daf[fltInter][:, 2].sum()
 
-    ## Estimation of d, strongly deleterious sites
-    output['d'] = 1 - (output['f'] + output['b'])
+		fltHigh = (daf[:, 0] >= h)
+		piHigh  = daf[fltHigh][:, 1].sum()
+		p0High  = daf[fltHigh][:, 2].sum()
 
-    oddsratio, output['pvalue'] = stats.fisher_exact([[p0, d0], [pi - deleterious, di]])[1]
-
-    # # divergence metrics
-    # output['Ka']       = di / mi
-    # output['Ks']       = d0 / m0
-    # output['omega']    = output['Ka'] / output['Ks']
+		toFix = piHigh - (piInter*p0High/p0Inter)
+		if toFix < 0:
+			toFix = 0
+		di = round(di + abs(toFix),3)
 
 
-    ## Omega A and Omega D
-    # output['omegaA'] = output['omega'] * output['alpha']
-    # output['omegaD'] = output['omega'] - output['omegaA']
-    # r1 = round(piLow/p0Low,3)
-    # r2 = round(piInter/p0Inter,3)
-    # try:
-    #     r3 = round(piHigh/p0High,3)
-    # except:
-    #     r3 = np.nan
-    # return output, np.array([pi, piNeutral, p0, r1,r2,r3,di, d0])
-    return output
+	ratioP0       = p0Low / p0Inter
+	deleterious   = piLow - (piInter * ratioP0)
+	piNeutral     = round(pi - deleterious - toFix,3)
+
+	output['alpha'] = round(1 - (((pi - deleterious) / p0) * (d0 / di)),3)
+	# output[0] = round(1 - ((piNeutral/p0) * (d0 / di)),3)
+
+	if(m is not None):
+		m0 = m[1];mi = m[0]
+		# ## Estimation of b: weakly deleterious
+		output['b'] = (deleterious / p0) * (m0 / mi)
+
+		## Estimation of f: neutral sites
+		output['f'] = (m0 * piNeutral) / (mi * p0)
+
+		## Estimation of d, strongly deleterious sites
+		output['d'] = 1 - (output['f'] + output['b'])
+
+	oddsratio, output['pvalue'] = stats.fisher_exact([[p0, d0], [pi - deleterious, di]])
+
+	# # divergence metrics
+	# output['Ka']       = di / mi
+	# output['Ks']       = d0 / m0
+	# output['omega']    = output['Ka'] / output['Ks']
+
+
+	## Omega A and Omega D
+	# output['omegaA'] = output['omega'] * output['alpha']
+	# output['omegaD'] = output['omega'] - output['omegaA']
+	# r1 = round(piLow/p0Low,3)
+	# r2 = round(piInter/p0Inter,3)
+	# try:
+	#     r3 = round(piHigh/p0High,3)
+	# except:
+	#     r3 = np.nan
+	# return output, np.array([pi, piNeutral, p0, r1,r2,r3,di, d0])
+	return output
 
 def makeSfs_v2(data, cum=False):
-    div = {'mi': data.mi.sum(),
-           'Di': data.di.sum(),
-           'm0': data.m0.sum(),
-           'D0': data.d0.sum()}
+	div = {'mi': data.mi.sum(),
+		   'Di': data.di.sum(),
+		   'm0': data.m0.sum(),
+		   'D0': data.d0.sum()}
 
-    daf = {'daf': np.arange(0.025, 1.0, 0.025),
-           'Pi': np.array(tuple(map(sum, zip(*tuple([tuple(map(int, daf.split(';'))) for daf in data.daf0f]))))),
-           'P0': np.array(tuple(map(sum, zip(*tuple([tuple(map(int, daf.split(';'))) for daf in data.daf4f])))))}
+	daf = {'daf': np.arange(0.025, 1.0, 0.025),
+		   'Pi': np.array(tuple(map(sum, zip(*tuple([tuple(map(int, daf.split(';'))) for daf in data.daf0f]))))),
+		   'P0': np.array(tuple(map(sum, zip(*tuple([tuple(map(int, daf.split(';'))) for daf in data.daf4f])))))}
 
-    if cum:
-        daf['Pi'] = np.cumsum(daf['Pi'][::-1])[::-1]
-        daf['P0'] = np.cumsum(daf['P0'][::-1])[::-1]
+	if cum:
+		daf['Pi'] = np.cumsum(daf['Pi'][::-1])[::-1]
+		daf['P0'] = np.cumsum(daf['P0'][::-1])[::-1]
 
-    return pd.DataFrame(daf, index=range(39)), pd.DataFrame(div, index=[0])
+	return pd.DataFrame(daf, index=range(39)), pd.DataFrame(div, index=[0])
 
 def FWW(daf, div, cutoff=0.15):
-    res = {}
+	res = {}
 
-    P0 = daf['P0'].sum()
-    Pi = daf['Pi'].sum()
-    D0 = int(div['D0'])
-    Di = int(div['Di'])
-    m0 = int(div['m0'])
-    mi = int(div['mi'])
+	P0 = daf['P0'].sum()
+	Pi = daf['Pi'].sum()
+	D0 = int(div['D0'])
+	Di = int(div['Di'])
+	m0 = int(div['m0'])
+	mi = int(div['mi'])
 
-    ### Estimating alpha with Pi/P0 ratio
-    PiGreater = daf[daf['daf'] > cutoff]['Pi'].sum()
-    P0Greater = daf[daf['daf'] > cutoff]['P0'].sum()
+	### Estimating alpha with Pi/P0 ratio
+	PiGreater = daf[daf['daf'] > cutoff]['Pi'].sum()
+	P0Greater = daf[daf['daf'] > cutoff]['P0'].sum()
 
-    res['alpha_fww'] = 1 - ((PiGreater / P0) * (D0 / Di))
-    res['pvalue_fww'] = stats.fisher_exact([[P0Greater, D0], [PiGreater, Di]])[1] 
+	res['alpha_fww'] = 1 - ((PiGreater / P0) * (D0 / Di))
+	res['pvalue_fww'] = stats.fisher_exact([[P0Greater, D0], [PiGreater, Di]])[1] 
 
-    return res
+	return res
 
-def iMK(daf, div, cutoff=0.15):
-    res = {}
+def standardMK(sfs,divergence,m):
 
-    P0 = daf['P0'].sum()
-    Pi = daf['Pi'].sum()
-    D0 = int(div['D0'])
-    Di = int(div['Di'])
-    m0 = int(div['m0'])
-    mi = int(div['mi'])
+	output = {}
 
-    ### Estimating alpha with Pi/P0 ratio
-    PiMinus   = daf[daf['daf'] <= cutoff]['Pi'].sum()
-    PiGreater = daf[daf['daf'] > cutoff]['Pi'].sum()
-    P0Minus   = daf[daf['daf'] <= cutoff]['P0'].sum()
-    P0Greater = daf[daf['daf'] > cutoff]['P0'].sum()
+	pn = np.sum(sfs[:,1])
+	ps = np.sum(sfs[:,2])
+	dn = divergence[0]
+	ds = divergence[1]
+	
+	
+	output["alpha"] = round(1 - ((pn/ps) * (ds / dn)),digits=3)
+	#  method = :mnnlike same results R, python two.sides
+	output["pvalue"] = pvalue(ps,pn,ds,dn)
 
-    ratioP0     = P0Minus / P0Greater
-    deleterious = PiMinus - (PiGreater * ratioP0)
-    PiNeutral   = int(np.round(Pi - deleterious))
+	mn = m[0]; ms = m[1]
 
-    if deleterious < 0:
-        res['alpha_imputed'] = np.nan
-        res['neg_b'] = np.nan
-        res['neg_f'] = np.nan
-        res['neg_d'] = np.nan
-        res['pvalue_imputed'] = np.nan
-        
-    else:
-        res['alpha_imputed'] = 1 - (((Pi - deleterious) / P0) * (D0 / Di))
+	ka      = dn / mn
+	ks       = ds / ms
+	output["omega"]    = ka/ ks
 
-        ## Estimation of b: weakly deleterious
-        res['neg_b'] = (deleterious / P0) * (m0 / mi)
 
-        ## Estimation of f: neutral sites
-        res['neg_f'] = (m0 * PiNeutral) / (mi * P0)
+	# Omega A and Omega D
+	output["omegaA"] = output["omega"] * output["alpha"]
+	output["omegaD"] = output["omega"] - output["omegaA"]	    
 
-        ## Estimation of d, strongly deleterious sites
-        res['neg_d'] = 1 - (res['neg_f'] + res['neg_b'])
-
-        res['pvalue_imputed'] = stats.fisher_exact([[P0, D0], [PiNeutral, Di]])[1] 
-
-    return res
+	return output
