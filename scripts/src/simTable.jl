@@ -58,5 +58,3 @@ bgs   = [0.999] |> permutedims
 simulations = simTable(alphas,bgs,parse(Int,ARGS[1]),parse(Int,ARGS[2]),parse(Int,ARGS[3]))
 
 CSV.write("/home/jmurga/mkt/202004/rawData/simulations/" * ARGS[4] * ".tsv", simulations, delim='\t')
-
-
