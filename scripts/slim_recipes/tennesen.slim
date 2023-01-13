@@ -1,0 +1,241 @@
+// Keywords: migration, dispersal
+
+initialize() {
+
+	//adap = Analytical.parameters(N=1000,n=661,gam_neg=-457,Lf=2*10^5, B=0.999)
+	//mu = Analytical.set_theta_f(adap)
+	
+	// rescale and not, check 
+	defineConstant("N", 7310);
+	defineConstant("S", sampleSize);
+	defineConstant("fileName", nF);
+	defineConstant("fullPath", p);
+	defineConstant("bn", (S*2)-1);
+	
+	// Command line arguments
+	defineConstant("wS", weaklyStrength); // 2Nes
+	defineConstant("sS", strongStrength); // 2Nes
+	defineConstant("muBgs", bgsMutationRate); // 2Nes
+	
+	defineConstant("pBeneficialW", pposL);
+	defineConstant("pBeneficialS", pposH);
+	defineConstant('nc_length', asInteger(10^5));
+	defineConstant('ex_length', asInteger(codingLength));
+
+
+	// Solve analytical to obtain the mutation rate in non-coding locus 
+	// The reduction depends on rho, locus lenght and negative selection strength
+	// adap = Analytical.parameters(N=1000,n=661,Lf=2*10^5,gam_neg=-457);
+	// Analytical.set_theta_f(adap)
+	//muBgs = 1.64e-6;
+
+	rates = c (muBgs, 0.001/(4*N),muBgs); 
+	// mutation rate end positions
+	// 99999 100499 100999 201999
+	ends = c(nc_length-1,
+                nc_length+ex_length-1,
+				(nc_length*2)+ex_length-1);
+
+
+	initializeMutationRate(rates, ends);	
+	initializeRecombinationRate(0.001/(4*N));	
+
+	// mutation types
+	//initializeMutationType("m1", 0.5, "g", -0.000402, 0.184); // non-coding neutral
+	//initializeMutationType("m2", 0.5, "g", -457/(2*N), 0.184); // non-coding deleterious
+
+	initializeMutationType("m1", 0.5, "f", -457/(2*N)); // non-coding deleterious
+	initializeMutationType("m2", 0.5, "f", 0.0); // synonymous neutral
+	initializeMutationType("m3", 0.5, "g", -457/(2*N), 0.184); // deleterious
+	initializeMutationType("m4", 0.5, "f", sS/(2*N)); // strong beneficial
+	initializeMutationType("m5", 0.5, "f", wS/(2*N)); // weakly beneficial
+    
+
+	initializeGenomicElementType("g1", c(m2,m3,m4,m5), c(0.25,0.75*(1-(pBeneficialS+pBeneficialW)),0.75*pBeneficialS,0.75*pBeneficialW)); // exon; relative proportion to get ~0.25 syn, ~0.75 non-syn
+	initializeGenomicElementType("g3", c(m1), c(1)); // non-coding whith only deleterious mutations
+	g3.color="black";
+
+	// Generate gene structure
+	base = 0;
+
+	// make a non-coding region
+	initializeGenomicElement(g3, base, base + nc_length - 1);
+	base = base + nc_length;
+	
+	// Two coding locus each under different mutation rate account for strongly or weak adaptation.
+	initializeGenomicElement(g1, base, base + ex_length - 1);
+	base = base + ex_length;
+	//initializeGenomicElement(g2, base, base + ex_length - 1);
+	//base = base + ex_length;
+	
+	// make a non-coding region
+	initializeGenomicElement(g3, base, base + nc_length - 1);
+	base = base + nc_length;
+
+}
+
+// Create the ancestral African population
+1 { 
+	sim.addSubpop("p1", N); 
+}
+
+// Expand the African population to 14474
+// This occurs 148000 years (5920) generations ago
+// 52080 { 5.5
+214080 { 
+	p1.setSubpopulationSize(14474); 
+}
+
+// Split non-Africans from Africans and set up migration between them
+// Thi1s occurs 51000 years (2040 generations) ago
+217960 {
+	sim.addSubpopSplit("p2", 1861, p1);
+	p1.setMigrationRates(c(p2), c(15e-5));
+	p2.setMigrationRates(c(p1), c(15e-5));
+}
+
+// Second european bottleneck and population growth
+// This occurs 23000 years (920 generations) ago
+219080 {
+	p2.setSubpopulationSize(1032);  // reduce European size
+	// Set migration rates for the rest of the simulation recascaled from 2.5e-5
+	p1.setMigrationRates(c(p2), c(2.5e-5));
+	p2.setMigrationRates(c(p1), c(2.5e-5));
+}
+
+// Set up exponential growth
+// Where N(0) is the base subpopulation size and t = gen - 57080:
+// N(Europe) should be int(round(N(0) * e^(0.0038*t)))
+// 57080:57795 {
+219080:219795 {
+
+	// t = sim.generation - 57080;
+	t = sim.generation - 219080;
+	//exp rescaled from 0.00307
+	p2_size = round(1030 * exp(0.00307 * t));
+	p2.setSubpopulationSize(asInteger(p2_size));
+
+
+}
+
+// Second exponential growth
+// 57795:58000 {
+219795:220000 {
+
+	t = sim.generation - 219795;
+	//exp rescaled from 0.0166; 0.0195
+	p1_size = round(14474 * exp(0.0166 * t));
+	p2_size = round(9390 * exp(0.0195 * t));
+
+	p1.setSubpopulationSize(asInteger(p1_size));	
+	p2.setSubpopulationSize(asInteger(p2_size));
+}
+
+
+
+// Generation 22000 is the present. Output and terminate. 
+//22000 rescaled from 220000; 220000*25 = 5.5Myears, approx split from chimpancee 
+// 58000 late() {
+220000 late() {
+	
+	
+	// Sample individuals
+	sampledIndividuals = p1.sampleIndividuals(S).genomes;  
+	//sampledIndividuals.outputMS("/home/jmurga/ms.txt");
+	//m1muts = sim.mutationsOfType(m1);
+	//m1_in_p2 = (sim.mutationCounts(sampledIndividuals, m1muts) > 0);
+
+	// Segregating sites within the sample. 
+	m = unique(sampledIndividuals.mutations);
+
+	m0 = unique(sampledIndividuals.mutationsOfType(m2));
+	mf3 = unique(sampledIndividuals.mutationsOfType(m3));
+	mf4 = unique(sampledIndividuals.mutationsOfType(m4));
+	mf5 = unique(sampledIndividuals.mutationsOfType(m5));
+	mi  = c(mf3,mf4,mf5);
+
+	if( sum(m0.size()) == 0){
+		p0 = rep(0,bn);
+	}else{
+		// Get frequencies and cleaning fixed within sample
+		f0 = sapply(m0, "mean(sampledIndividuals.containsMutations(applyValue));");
+		p0  = sapply(0:(bn), " sum((f0 >= applyValue / (bn)) & (f0 < (applyValue + 1) / (bn))); ");
+	}
+ 	
+	if(sum(mi.size()) == 0){
+		pi = rep(0,bn);
+	}else{
+		fi = sapply(mi, "mean(sampledIndividuals.containsMutations(applyValue));");				
+		// 	Make binned SFS
+		pi  = sapply(0:(bn), " sum((fi >= applyValue / (bn)) & (fi < (applyValue + 1) / (bn))); ");
+	}
+
+	if (sum(mf5.size()) == 0){
+		pw = rep(0,bn);
+	}else{
+		fw = sapply(mf5, "mean(sampledIndividuals.containsMutations(applyValue));");
+		pw  = sapply(0:((bn)-1), " sum((fw >= applyValue / (bn)) & (fw < (applyValue + 1) / (bn))); ");
+	}
+
+
+   	// Get substitution info
+	subs = sim.substitutions;
+	m1Subs = subs[subs.mutationType == m1];
+	// Coding locus
+	m2Subs = subs[subs.mutationType == m2];
+	m3Subs = subs[subs.mutationType == m3];
+	m4Subs = subs[subs.mutationType == m4];
+	m5Subs = subs[subs.mutationType == m5];
+
+	trueAlpha = (m4Subs.size() + m5Subs.size()) / (m4Subs.size() + m5Subs.size() + m3Subs.size());
+	trueAlphaW =  (m5Subs.size()) / (m5Subs.size() + m4Subs.size() + m3Subs.size());
+	trueAlphaS = (m4Subs.size()) / (m5Subs.size() + m4Subs.size() + m3Subs.size());
+
+	di = m5Subs.size() + m4Subs.size() + m3Subs.size();
+	dw = m5Subs.size();
+	d0 = m2Subs.size();
+	ds = m4Subs.size();
+
+	if(isNAN(trueAlphaW)){
+		trueAlphaW = "NA";
+	}
+	if(isNAN(trueAlphaS)){
+		trueAlphaS = "NA";
+	}
+	if(isNAN(trueAlpha)){
+		trueAlpha = "NA";
+	}
+	
+	f = (1:(bn)) / (bn);
+	line = "daf\tpi\tp0\tpw";
+	writeFile( fullPath + "/daf/daf" + fileName +  ".tsv.gz", line, compress=T);
+	//catn("daf\tpi\tp0\tpw");
+	for (i in 0:(bn-1)){
+		line = f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i];
+		writeFile(fullPath + "/daf/daf" + fileName +  ".tsv.gz", line,append=T, compress=T);
+		//catn( f[i] + "\t" + pi[i] + "\t" + p0[i] + "\t" + pw[i]);
+	}
+
+	line  = "di\td0\tdw\tds";
+	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz",line, compress=T); 
+	line  = di + "\t" + d0 + "\t" + dw + "\t" + ds;
+	writeFile(fullPath + "/div/div" + fileName +  ".tsv.gz", line,append=T ,compress=T);
+
+	
+	line = "trueAlphaW\ttrueAlphaS\ttrueAlpha";
+	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line ,compress=T);
+	line = trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha;
+	writeFile(fullPath + "/div/alpha" + fileName +  ".tsv.gz", line,append=T ,compress=T);
+
+
+	//catn("di\td0\tdw\tds");
+	//catn(di + "\t" + d0 + "\t" + dw + "\t" + ds);
+	
+	//catn("trueAlphaW" + "\t" + "trueAlphaS" + "\t" + "trueAlpha");
+	//catn(trueAlphaW + "\t" +  trueAlphaS + "\t" + trueAlpha);
+	
+	//sampledIndividuals.outputVCF(filePath='/home/jmurga/tennesen.vcf'); // AFR ancestry phase 3 sample of size 661
+
+}
+
+
